@@ -1,0 +1,35 @@
+@page "/login"
+@layout BlankLayout
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-card__brand">
+            <div class="login-card__eyebrow">Farm Platform</div>
+            <h2 class="login-card__headline">Everything the farm runs on, in one place.</h2>
+            <p class="login-card__copy">Irrigation today. Assets, crops, tasks and finance as they come online — same shell, same login.</p>
+        </div>
+        <div class="login-card__form">
+            <h1>Sign in</h1>
+
+            <label class="form-label" for="login-username">Email or username</label>
+            <input id="login-username" class="form-input" @bind="Username" @bind:event="oninput" />
+
+            <label class="form-label" for="login-password">Password</label>
+            <input id="login-password" type="password" class="form-input" @bind="Password" @bind:event="oninput" />
+
+            <button class="btn btn-primary login-card__submit" @onclick="HandleSignIn">Sign in</button>
+
+            <div class="login-card__helper">Signed in as <strong>Worker</strong> → lands on Today view. Owner/manager → Farm overview.</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Username = string.Empty;
+    private string Password = string.Empty;
+
+    private void HandleSignIn()
+    {
+        // Wired up once Core: Users + Auth lands (plan.md).
+    }
+}

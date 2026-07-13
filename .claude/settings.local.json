@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \"import secrets; print\\(secrets.token_hex\\(6\\)\\)\")"
+      "Bash(python -c \"import secrets; print\\(secrets.token_hex\\(6\\)\\)\")",
+      "Bash(dotnet new *)",
+      "Bash(dotnet sln *)",
+      "Bash(rm -rf apps/web/Layout apps/web/Pages)",
+      "Bash(mkdir -p web-modules/Farm.Web.Core/wwwroot/css)",
+      "Bash(mkdir -p web-modules/Farm.Web.Core/Shell)",
+      "Bash(mkdir -p web-modules/Farm.Web.Core/Pages)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5257/)",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/Scripts/python -m pip install -q -r requirements.txt)",
+      "Bash(powershell -Command \"Get-Process -Name dotnet -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,Path\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 5257 -ErrorAction SilentlyContinue | Select-Object -First 1 OwningProcess\")",
+      "Bash(powershell -Command \"Stop-Process -Id 58492 -Force\")"
     ]
   }
 }

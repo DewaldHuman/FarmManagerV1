@@ -1,0 +1,64 @@
+:root {
+  --color-bg: #f7f5ec;
+  --color-surface: #ffffff;
+  --color-ink: #221f14;
+  --color-text-secondary: #595549;
+  --color-text-muted: #676357;
+  --color-primary: #2c6330;
+  --color-primary-hover: #17501d;
+  --color-earth: #6e4d32;
+  --color-shell-bg: #0f190f;
+  --color-shell-active: #18361a;
+  --color-border-light: #e1ded3;
+  --color-border-medium: #d2cebf;
+
+  --status-ok-bg: #e6f8e6;
+  --status-ok-border: #b6d9b6;
+  --status-ok-badge-bg: #c2ebc2;
+  --status-ok-text: #0b3e12;
+
+  --status-due-bg: #fef4df;
+  --status-due-border: #edd0a0;
+  --status-due-badge-bg: #fed899;
+  --status-due-text: #663400;
+
+  --status-overdue-bg: #ffeeeb;
+  --status-overdue-border: #ffc4bd;
+  --status-overdue-badge-bg: #ffc4bd;
+  --status-overdue-text: #861118;
+
+  --result-bg: #dbf8da;
+  --result-border: #9ecc9e;
+  --result-heading: #1e4e22;
+  --result-value: #003306;
+
+  --font-sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --radius-card-sm: 14px;
+  --radius-card-lg: 20px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+
+  --space-page: 48px;
+  --gap-grid: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}

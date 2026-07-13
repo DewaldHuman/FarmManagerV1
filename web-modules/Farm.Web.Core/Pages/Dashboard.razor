@@ -1,0 +1,98 @@
+@page "/"
+@layout AppShellLayout
+
+<div class="page-header">
+    <div>
+        <div class="app-shell__eyebrow">Home</div>
+        <h1 class="app-shell__title">Dashboard</h1>
+    </div>
+    <div class="view-toggle">
+        <button class="view-toggle__btn @(ViewMode == DashboardView.Owner ? "view-toggle__btn--active" : "")"
+                @onclick="() => SetView(DashboardView.Owner)">
+            Owner / Manager view
+        </button>
+        <button class="view-toggle__btn @(ViewMode == DashboardView.Worker ? "view-toggle__btn--active" : "")"
+                @onclick="() => SetView(DashboardView.Worker)">
+            Worker view
+        </button>
+    </div>
+</div>
+<div class="page-subtitle">Same login, different landing screen based on role.</div>
+
+@if (ViewMode == DashboardView.Owner)
+{
+    <div class="stat-grid">
+        @foreach (var stat in _stats)
+        {
+            <div class="stat-card stat-card--@stat.Tone">
+                <div class="stat-card__value">@stat.Value</div>
+                <div class="stat-card__label">@stat.Label</div>
+            </div>
+        }
+    </div>
+
+    <h3 class="section-heading">Recent activity</h3>
+    <div class="activity-list">
+        @foreach (var item in _activity)
+        {
+            <div class="activity-row">
+                <div>@item.Text</div>
+                <div class="activity-row__time">@item.Time</div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <h3 class="section-heading section-heading--lg">What needs doing today</h3>
+    <div class="today-list">
+        @foreach (var task in _todayTasks)
+        {
+            <div class="today-card today-card--@task.Tone">
+                <div>
+                    <div class="today-card__name">@task.Name</div>
+                    <div class="today-card__crop">@task.Crop</div>
+                </div>
+                <div class="today-card__actions">
+                    <div class="pill pill-@task.Tone">@task.Note</div>
+                    <button class="btn btn-primary">Run</button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private enum DashboardView { Owner, Worker }
+
+    private DashboardView ViewMode = DashboardView.Owner;
+
+    private void SetView(DashboardView mode) => ViewMode = mode;
+
+    private sealed record Stat(string Label, string Value, string Tone);
+    private sealed record Activity(string Text, string Time);
+    private sealed record TodayTask(string Name, string Crop, string Note, string Tone);
+
+    private readonly List<Stat> _stats = new()
+    {
+        new("Active zones", "18", "neutral"),
+        new("Due today", "3", "due"),
+        new("Overdue", "1", "overdue"),
+        new("Runs logged this week", "22", "neutral"),
+    };
+
+    private readonly List<Activity> _activity = new()
+    {
+        new("North Orchard B — irrigation run logged (34 min)", "6:12am"),
+        new("West Pasture flagged overdue", "Yesterday"),
+        new("New zone added: East Orchard A", "2 days ago"),
+        new("South Field 3 — irrigation run logged (41 min)", "2 days ago"),
+    };
+
+    private readonly List<TodayTask> _todayTasks = new()
+    {
+        new("West Pasture", "Pasture grass", "Overdue 5 days", "overdue"),
+        new("South Field 3", "Alfalfa", "Due today", "due"),
+        new("South Field 4", "Alfalfa", "Due today", "due"),
+    };
+}

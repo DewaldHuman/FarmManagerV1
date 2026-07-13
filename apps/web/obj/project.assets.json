@@ -432,6 +432,19 @@
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.targets": {}
         }
+      },
+      "Farm.Web.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Web": "9.0.17"
+        },
+        "compile": {
+          "bin/placeholder/Farm.Web.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Farm.Web.Core.dll": {}
+        }
       }
     },
     "net9.0/browser-wasm": {
@@ -864,6 +877,19 @@
         "build": {
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.targets": {}
+        }
+      },
+      "Farm.Web.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Web": "9.0.17"
+        },
+        "compile": {
+          "bin/placeholder/Farm.Web.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Farm.Web.Core.dll": {}
         }
       }
     }
@@ -1746,10 +1772,16 @@
         "tools/net9.0/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
         "tools/net9.0/Microsoft.NET.WebAssembly.Webcil.dll"
       ]
+    },
+    "Farm.Web.Core/1.0.0": {
+      "type": "project",
+      "path": "../../web-modules/Farm.Web.Core/Farm.Web.Core.csproj",
+      "msbuildProject": "../../web-modules/Farm.Web.Core/Farm.Web.Core.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0": [
+      "Farm.Web.Core >= 1.0.0",
       "Microsoft.AspNetCore.Components.WebAssembly >= 9.0.17",
       "Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 9.0.17",
       "Microsoft.NET.ILLink.Tasks >= 9.0.17",
@@ -1787,7 +1819,11 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\bbdnet2040\\Documents\\Personal\\Apps\\FarmManager\\web-modules\\Farm.Web.Core\\Farm.Web.Core.csproj": {
+              "projectPath": "C:\\Users\\bbdnet2040\\Documents\\Personal\\Apps\\FarmManager\\web-modules\\Farm.Web.Core\\Farm.Web.Core.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

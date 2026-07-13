@@ -1,0 +1,70 @@
+@inject NavigationManager Nav
+
+<nav class="app-shell__nav">
+    <div class="app-shell__farm-name">🌾 Ridgeline Farm</div>
+
+    @foreach (var item in _navItems)
+    {
+        <div>
+            @if (item.Href is not null)
+            {
+                <a href="@item.Href"
+                   class="app-shell__nav-item @(IsActive(item.Href, matchPrefix: true) ? "app-shell__nav-item--active" : "app-shell__nav-item--inactive")">
+                    <span>@item.Icon</span>@item.Label
+                </a>
+            }
+            else
+            {
+                <div class="app-shell__nav-item app-shell__nav-item--soon">
+                    <span>@item.Icon</span>@item.Label
+                    <span class="app-shell__soon-tag">Soon</span>
+                </div>
+            }
+
+            @if (item.SubItems is { Count: > 0 })
+            {
+                <div class="app-shell__subnav">
+                    @foreach (var sub in item.SubItems)
+                    {
+                        <a href="@sub.Href"
+                           class="app-shell__subnav-item @(IsActive(sub.Href, matchPrefix: false) ? "app-shell__subnav-item--active" : "")">
+                            @sub.Label
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    }
+</nav>
+
+@code {
+    private sealed record SubNavItem(string Label, string Href);
+
+    private sealed record NavItem(string Icon, string Label, string? Href, IReadOnlyList<SubNavItem>? SubItems = null);
+
+    private readonly List<NavItem> _navItems = new()
+    {
+        new("💧", "Irrigation", "/irrigation/zones", new List<SubNavItem>
+        {
+            new("Zones", "/irrigation/zones"),
+            new("Run Calculator", "/irrigation/run-calculator"),
+            new("Zone Designs", "/irrigation/zone-designs"),
+            new("History", "/irrigation/history"),
+        }),
+        new("🔧", "Assets", null),
+        new("🌱", "Crops", null),
+        new("✅", "Tasks", null),
+        new("💰", "Finance", null),
+        new("📊", "Reporting", null),
+    };
+
+    private bool IsActive(string href, bool matchPrefix)
+    {
+        var relative = "/" + Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/');
+        var target = href.TrimEnd('/');
+
+        return matchPrefix
+            ? relative.StartsWith(target, StringComparison.OrdinalIgnoreCase)
+            : relative.Equals(target, StringComparison.OrdinalIgnoreCase);
+    }
+}

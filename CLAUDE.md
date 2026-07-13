@@ -113,9 +113,9 @@ plan.md
 > Update this section every session — it's the fastest way for an AI assistant (or future you) to know where things stand without re-reading the whole history.
 
 - **Current phase:** Phase 1 — Foundation + Irrigation
-- **What exists:** design doc only, no code yet
+- **What exists:** repo scaffold — FastAPI backend (`apps/api`, SQLAlchemy + Alembic init, `core` schema, health endpoint only, no real auth/domain logic yet) and Blazor WASM host (`apps/web`) + `Farm.Web.Core` RCL (shared shell/nav, design tokens, Login and Dashboard screens, UI-only — not wired to real auth)
 - **What's in progress:** —
-- **Next concrete step:** scaffold repo structure, Core module (auth, farm/field/zone registry), Irrigation module skeleton + calculation engine
+- **Next concrete step:** Core: Users + Auth (JWT, roles), Farm → Field/Block → Zone registry (CRUD + UI), then Irrigation module (data model + calculation engine)
 
 ---
 

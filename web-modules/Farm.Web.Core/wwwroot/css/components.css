@@ -1,0 +1,73 @@
+.btn {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+  padding: 16px 24px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #312e22;
+  border: 2px solid var(--color-border-medium);
+}
+
+.pill {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pill-ok {
+  background: var(--status-ok-badge-bg);
+  color: var(--status-ok-text);
+}
+
+.pill-due {
+  background: var(--status-due-badge-bg);
+  color: var(--status-due-text);
+}
+
+.pill-overdue {
+  background: var(--status-overdue-badge-bg);
+  color: var(--status-overdue-text);
+}
+
+.card {
+  border-radius: var(--radius-card-lg);
+  border: 1px solid var(--color-border-light);
+  background: #fff;
+}
+
+.form-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #312e22;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  padding: 18px;
+  font-size: 17px;
+  border: 2px solid var(--color-border-medium);
+  border-radius: var(--radius-control);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  margin-bottom: 20px;
+}

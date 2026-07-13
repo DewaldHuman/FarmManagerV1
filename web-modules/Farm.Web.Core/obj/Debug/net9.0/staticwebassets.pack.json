@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\bbdnet2040\\Documents\\Personal\\Apps\\FarmManager\\web-modules\\Farm.Web.Core\\wwwroot\\css\\components.css",
+      "PackagePath": "staticwebassets\\css\\components.css"
+    },
+    {
+      "Id": "C:\\Users\\bbdnet2040\\Documents\\Personal\\Apps\\FarmManager\\web-modules\\Farm.Web.Core\\wwwroot\\css\\screens.css",
+      "PackagePath": "staticwebassets\\css\\screens.css"
+    },
+    {
+      "Id": "C:\\Users\\bbdnet2040\\Documents\\Personal\\Apps\\FarmManager\\web-modules\\Farm.Web.Core\\wwwroot\\css\\shell.css",
+      "PackagePath": "staticwebassets\\css\\shell.css"
+    },
+    {
+      "Id": "C:\\Users\\bbdnet2040\\Documents\\Personal\\Apps\\FarmManager\\web-modules\\Farm.Web.Core\\wwwroot\\css\\tokens.css",
+      "PackagePath": "staticwebassets\\css\\tokens.css"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.Farm.Web.Core.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.Farm.Web.Core.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.build.Farm.Web.Core.props",
+      "PackagePath": "build\\Farm.Web.Core.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildMultiTargeting.Farm.Web.Core.props",
+      "PackagePath": "buildMultiTargeting\\Farm.Web.Core.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildTransitive.Farm.Web.Core.props",
+      "PackagePath": "buildTransitive\\Farm.Web.Core.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
