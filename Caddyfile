@@ -1,0 +1,16 @@
+:80 {
+	# API traffic
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	# Everything else: the Blazor WASM static site
+	handle {
+		root * /srv/web
+		file_server
+		try_files {path} /index.html
+	}
+}
+
+# Once this moves to a real domain (Phase 5), replace ":80" above with the
+# domain name — Caddy will handle HTTPS automatically.

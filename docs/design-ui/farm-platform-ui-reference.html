@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #f7f5ec; }
+    * { box-sizing: border-box; font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    a { color: #2c6330; text-decoration: underline; }
+    a:hover { color: #17501d; }
+  </style>
+</helmet>
+
+<div style="display:flex; flex-direction:column; gap:64px; padding:48px 0 120px; max-width:1600px; margin:0 auto;">
+
+  <!-- ============ STYLE GUIDE ============ -->
+  <section data-screen-label="Style Guide" style="background:#fff; border-radius:16px; padding:48px; margin:0 24px; border:1px solid #e1ded3;">
+    <div style="font-size:13px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6e4d32; margin-bottom:8px;">Style Guide</div>
+    <h1 style="font-size:36px; font-weight:700; color:#221f14; margin:0 0 40px;">Farm Platform — Visual System</h1>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:48px;">
+      <div>
+        <h3 style="font-size:15px; text-transform:uppercase; letter-spacing:0.06em; color:#595549; margin:0 0 16px;">Color</h3>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+          <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="9">
+            <div style="border-radius:10px; overflow:hidden; border:1px solid #dbd8c9;">
+              <div style="height:56px; background:{{ sw.color }};"></div>
+              <div style="padding:8px 10px; background:#fff;">
+                <div style="font-size:12px; font-weight:600; color:#221f14;">{{ sw.name }}</div>
+                <div style="font-size:11px; color:#676357; font-family:monospace;">{{ sw.color }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px; text-transform:uppercase; letter-spacing:0.06em; color:#595549; margin:0 0 16px;">Type</h3>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="font-size:36px; font-weight:700; color:#221f14;">Zone Status — 36 / 700</div>
+          <div style="font-size:22px; font-weight:600; color:#221f14;">Section Header — 22 / 600</div>
+          <div style="font-size:17px; font-weight:400; color:#312e22;">Body text for forms and lists — 17 / 400</div>
+          <div style="font-size:14px; font-weight:500; color:#676357; text-transform:uppercase; letter-spacing:0.06em;">Label / meta — 14 / 500 caps</div>
+        </div>
+
+        <h3 style="font-size:15px; text-transform:uppercase; letter-spacing:0.06em; color:#595549; margin:28px 0 16px;">Buttons</h3>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+          <button style="padding:16px 28px; font-size:17px; font-weight:600; background:#2c6330; color:#fff; border:none; border-radius:10px; cursor:pointer;">Primary Action</button>
+          <button style="padding:16px 28px; font-size:17px; font-weight:600; background:#fff; color:#312e22; border:2px solid #d2cebf; border-radius:10px; cursor:pointer;">Secondary</button>
+        </div>
+
+        <h3 style="font-size:15px; text-transform:uppercase; letter-spacing:0.06em; color:#595549; margin:28px 0 16px;">Status</h3>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <div style="padding:8px 16px; border-radius:999px; background:#d0f3d0; color:#0b3e12; font-size:14px; font-weight:600;">On schedule</div>
+          <div style="padding:8px 16px; border-radius:999px; background:#ffe5ab; color:#663400; font-size:14px; font-weight:600;">Due today</div>
+          <div style="padding:8px 16px; border-radius:999px; background:#ffd1ca; color:#861118; font-size:14px; font-weight:600;">Overdue</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LOGIN ============ -->
+  <section data-screen-label="Login" style="display:flex; justify-content:center; padding:0 24px;">
+    <div style="width:100%; max-width:1400px; background:#121e12; border-radius:20px; overflow:hidden; display:grid; grid-template-columns:1.1fr 1fr; min-height:640px;">
+      <div style="padding:64px; display:flex; flex-direction:column; justify-content:center; color:#fff;">
+        <div style="font-size:14px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#a6c9a6; margin-bottom:20px;">Farm Platform</div>
+        <h2 style="font-size:40px; font-weight:700; line-height:1.15; margin:0 0 16px; max-width:420px;">Everything the farm runs on, in one place.</h2>
+        <p style="font-size:17px; color:#c6d1c6; max-width:380px; line-height:1.5;">Irrigation today. Assets, crops, tasks and finance as they come online — same shell, same login.</p>
+      </div>
+      <div style="background:#fff; padding:64px; display:flex; flex-direction:column; justify-content:center;">
+        <h1 style="font-size:28px; font-weight:700; color:#221f14; margin:0 0 32px;">Sign in</h1>
+        <label style="font-size:14px; font-weight:600; color:#3e3b2f; margin-bottom:8px; display:block;">Email or username</label>
+        <input value="jordan@ridgeline-farm" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #dbd8c9; border-radius:10px; margin-bottom:20px; color:#221f14;" />
+        <label style="font-size:14px; font-weight:600; color:#3e3b2f; margin-bottom:8px; display:block;">Password</label>
+        <input type="password" value="********" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #dbd8c9; border-radius:10px; margin-bottom:28px;" />
+        <button style="width:100%; padding:18px; font-size:18px; font-weight:700; background:#2c6330; color:#fff; border:none; border-radius:10px; cursor:pointer; margin-bottom:16px;">Sign in</button>
+        <div style="font-size:14px; color:#676357; text-align:center;">Signed in as <strong>Worker</strong> → lands on Today view. Owner/manager → Farm overview.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section data-screen-label="Dashboard" style="padding:0 24px;">
+    <div style="display:flex; background:#fff; border-radius:20px; overflow:hidden; border:1px solid #e1ded3; min-height:820px;">
+
+      <nav style="width:240px; background:#0f190f; padding:28px 16px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;">
+        <div style="color:#fff; font-weight:700; font-size:17px; padding:0 12px 24px;">🌾 Ridgeline Farm</div>
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; background:{{ item.active }}; color:{{ item.color }}; font-size:15px; font-weight:600;">
+              <span>{{ item.icon }}</span>{{ item.label }}
+              <sc-if value="{{ item.soon }}"><span style="margin-left:auto; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6;">Soon</span></sc-if>
+            </div>
+            <sc-if value="{{ item.expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:2px; margin:4px 0 8px 34px;">
+                <sc-for list="{{ item.subItems }}" as="sub" hint-placeholder-count="3">
+                  <div style="padding:10px 12px; border-radius:8px; background:{{ sub.active }}; color:{{ sub.color }}; font-size:14px; font-weight:500;">{{ sub.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="flex:1; padding:40px 48px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+          <div>
+            <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Home</div>
+            <h1 style="font-size:32px; font-weight:700; color:#221f14; margin:0;">Dashboard</h1>
+          </div>
+          <div style="display:flex; gap:6px; background:#f4f2ea; padding:6px; border-radius:12px;">
+            <button onClick="{{ showOwner }}" style="padding:12px 20px; font-size:14px; font-weight:600; background:{{ ownerTabBg }}; color:{{ ownerTabColor }}; border:none; border-radius:8px; cursor:pointer;">Owner / Manager view</button>
+            <button onClick="{{ showWorker }}" style="padding:12px 20px; font-size:14px; font-weight:600; background:{{ workerTabBg }}; color:{{ workerTabColor }}; border:none; border-radius:8px; cursor:pointer;">Worker view</button>
+          </div>
+        </div>
+        <div style="font-size:14px; color:#676357; margin-bottom:32px;">Same login, different landing screen based on role.</div>
+
+        <sc-if value="{{ isOwnerView }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;">
+            <sc-for list="{{ statCards }}" as="s" hint-placeholder-count="4">
+              <div style="padding:24px; border-radius:14px; background:{{ s.bg }}; border:2px solid {{ s.border }};">
+                <div style="font-size:36px; font-weight:700; color:{{ s.color }};">{{ s.value }}</div>
+                <div style="font-size:14px; font-weight:500; color:#595549; margin-top:4px;">{{ s.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <h3 style="font-size:16px; font-weight:700; color:#221f14; margin:0 0 16px;">Recent activity</h3>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="4">
+              <div style="display:flex; justify-content:space-between; padding:16px 4px; border-bottom:1px solid #e6e5dd; font-size:15px; color:#312e22;">
+                <div>{{ a.text }}</div>
+                <div style="color:#757265;">{{ a.time }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isWorkerView }}" hint-placeholder-val="{{ false }}">
+          <h3 style="font-size:22px; font-weight:700; color:#221f14; margin:0 0 20px;">What needs doing today</h3>
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <sc-for list="{{ todayCards }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:28px; border-radius:16px; background:{{ t.bg }}; border:2px solid {{ t.border }};">
+                <div>
+                  <div style="font-size:22px; font-weight:700; color:#1d1b10;">{{ t.name }}</div>
+                  <div style="font-size:15px; color:#595549; margin-top:4px;">{{ t.crop }}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:20px;">
+                  <div style="padding:8px 16px; border-radius:999px; background:{{ t.badgeBg }}; color:{{ t.badgeColor }}; font-size:14px; font-weight:700;">{{ t.note }}</div>
+                  <button style="padding:18px 28px; font-size:17px; font-weight:700; background:#2c6330; color:#fff; border:none; border-radius:10px; cursor:pointer;">Run</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SHELL + ZONE LIST ============ -->
+  <section data-screen-label="Irrigation Zone List" style="padding:0 24px;">
+    <div style="display:flex; background:#fff; border-radius:20px; overflow:hidden; border:1px solid #e1ded3; min-height:820px;">
+
+      <nav style="width:240px; background:#0f190f; padding:28px 16px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;">
+        <div style="color:#fff; font-weight:700; font-size:17px; padding:0 12px 24px;">🌾 Ridgeline Farm</div>
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; background:{{ item.active }}; color:{{ item.color }}; font-size:15px; font-weight:600;">
+              <span>{{ item.icon }}</span>{{ item.label }}
+              <sc-if value="{{ item.soon }}"><span style="margin-left:auto; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6;">Soon</span></sc-if>
+            </div>
+            <sc-if value="{{ item.expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:2px; margin:4px 0 8px 34px;">
+                <sc-for list="{{ item.subItems }}" as="sub" hint-placeholder-count="3">
+                  <div style="padding:10px 12px; border-radius:8px; background:{{ sub.active }}; color:{{ sub.color }}; font-size:14px; font-weight:500;">{{ sub.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="flex:1; padding:40px 48px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:32px;">
+          <div>
+            <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Irrigation</div>
+            <h1 style="font-size:32px; font-weight:700; color:#221f14; margin:0;">Zones</h1>
+          </div>
+          <button style="padding:16px 24px; font-size:16px; font-weight:600; background:#2c6330; color:#fff; border:none; border-radius:10px; cursor:pointer;">+ Add Zone</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:20px;">
+          <sc-for list="{{ zones }}" as="z" hint-placeholder-count="6">
+            <a href="#run-calc" style="display:block; text-decoration:none; padding:28px; border-radius:16px; background:{{ z.bg }}; border:2px solid {{ z.border }};">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                <div>
+                  <div style="font-size:20px; font-weight:700; color:#1d1b10;">{{ z.name }}</div>
+                  <div style="font-size:14px; color:#595549; margin-top:2px;">{{ z.field }} · {{ z.crop }}</div>
+                </div>
+                <div style="padding:6px 14px; border-radius:999px; background:{{ z.badgeBg }}; color:{{ z.badgeColor }}; font-size:13px; font-weight:700; white-space:nowrap;">{{ z.status }}</div>
+              </div>
+              <div style="display:flex; gap:28px; font-size:14px; color:#4b483c;">
+                <div><div style="font-weight:600; color:#221f14; font-size:16px;">{{ z.lastWatered }}</div>last watered</div>
+                <div><div style="font-weight:600; color:#221f14; font-size:16px;">{{ z.area }}</div>area</div>
+              </div>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FARM STRUCTURE ============ -->
+  <section data-screen-label="Farm Structure" style="padding:0 24px;">
+    <div style="display:flex; background:#fff; border-radius:20px; overflow:hidden; border:1px solid #e1ded3; min-height:820px;">
+
+      <nav style="width:240px; background:#0f190f; padding:28px 16px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;">
+        <div style="color:#fff; font-weight:700; font-size:17px; padding:0 12px 24px;">🌾 Ridgeline Farm</div>
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; background:{{ item.active }}; color:{{ item.color }}; font-size:15px; font-weight:600;">
+              <span>{{ item.icon }}</span>{{ item.label }}
+              <sc-if value="{{ item.soon }}"><span style="margin-left:auto; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6;">Soon</span></sc-if>
+            </div>
+            <sc-if value="{{ item.expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:2px; margin:4px 0 8px 34px;">
+                <sc-for list="{{ item.subItems }}" as="sub" hint-placeholder-count="3">
+                  <div style="padding:10px 12px; border-radius:8px; background:{{ sub.active }}; color:{{ sub.color }}; font-size:14px; font-weight:500;">{{ sub.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="flex:1; padding:40px 48px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:32px;">
+          <div>
+            <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Core</div>
+            <h1 style="font-size:32px; font-weight:700; color:#221f14; margin:0;">Farm structure</h1>
+          </div>
+          <button style="padding:16px 24px; font-size:16px; font-weight:600; background:#2c6330; color:#fff; border:none; border-radius:10px; cursor:pointer;">+ Add Field</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <sc-for list="{{ farmTree }}" as="f" hint-placeholder-count="5">
+            <div style="border:2px solid #e1ded3; border-radius:14px; padding:20px 24px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <div style="font-size:19px; font-weight:700; color:#221f14;">{{ f.field }}</div>
+                <div style="display:flex; gap:10px;">
+                  <button style="padding:10px 16px; font-size:14px; font-weight:600; background:#fff; color:#312e22; border:2px solid #d2cebf; border-radius:8px; cursor:pointer;">Edit</button>
+                  <button style="padding:10px 16px; font-size:14px; font-weight:600; background:#eaf6ea; color:#1b451e; border:2px solid #bad7ba; border-radius:8px; cursor:pointer;">+ Add Zone</button>
+                </div>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <sc-for list="{{ f.zones }}" as="z" hint-placeholder-count="2">
+                  <div style="padding:12px 18px; border-radius:10px; background:#f7f5ee; font-size:15px; font-weight:600; color:#312e22;">{{ z }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RUN CALCULATION ============ -->
+  <section id="run-calc" data-screen-label="Run Irrigation Calculation" style="padding:0 24px;">
+    <div style="display:flex; background:#fff; border-radius:20px; overflow:hidden; border:1px solid #e1ded3; min-height:820px;">
+
+      <nav style="width:240px; background:#0f190f; padding:28px 16px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;">
+        <div style="color:#fff; font-weight:700; font-size:17px; padding:0 12px 24px;">🌾 Ridgeline Farm</div>
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; background:{{ item.active }}; color:{{ item.color }}; font-size:15px; font-weight:600;">
+              <span>{{ item.icon }}</span>{{ item.label }}
+              <sc-if value="{{ item.soon }}"><span style="margin-left:auto; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6;">Soon</span></sc-if>
+            </div>
+            <sc-if value="{{ item.expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:2px; margin:4px 0 8px 34px;">
+                <sc-for list="{{ item.subItems }}" as="sub" hint-placeholder-count="3">
+                  <div style="padding:10px 12px; border-radius:8px; background:{{ sub.active }}; color:{{ sub.color }}; font-size:14px; font-weight:500;">{{ sub.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="flex:1; padding:40px 48px;">
+        <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Irrigation</div>
+        <h1 style="font-size:32px; font-weight:700; color:#221f14; margin:0 0 32px;">Run calculation</h1>
+
+        <sc-if value="{{ showPicker }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:17px; color:#595549; margin-bottom:24px;">Choose a calculator</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1000px;">
+            <sc-for list="{{ calcOptions }}" as="c" hint-placeholder-count="3">
+              <div onClick="{{ c.onClick }}" style="padding:32px 24px; border-radius:16px; background:#f7f5ee; border:2px solid #e1ded3; cursor:pointer; text-align:center;">
+                <div style="font-size:36px; margin-bottom:16px;">{{ c.icon }}</div>
+                <div style="font-size:19px; font-weight:700; color:#221f14; margin-bottom:8px;">{{ c.label }}</div>
+                <div style="font-size:14px; color:#595549; line-height:1.4;">{{ c.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEt0 }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ backToPicker }}" style="padding:12px 20px; font-size:14px; font-weight:600; background:#fff; color:#312e22; border:2px solid #d2cebf; border-radius:8px; cursor:pointer; margin-bottom:24px;">← Choose a different calculator</button>
+          <div style="display:grid; grid-template-columns:1fr 380px; gap:40px;">
+            <div>
+              <div style="font-size:20px; font-weight:700; color:#221f14; margin-bottom:24px;">ET₀ Run-Time — North Orchard B</div>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Zone</label>
+              <select style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px; color:#221f14; background:#fff;">
+                <option>North Orchard B</option>
+                <option>South Field 3</option>
+                <option>Greenhouse Row 1</option>
+              </select>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Crop growth stage</label>
+              <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px;">
+                <sc-for list="{{ stages }}" as="stage" hint-placeholder-count="3">
+                  <div style="padding:18px; text-align:center; font-size:16px; font-weight:600; border-radius:10px; background:{{ stage.bg }}; color:{{ stage.color }}; border:2px solid {{ stage.border }};">{{ stage.label }}</div>
+                </sc-for>
+              </div>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Reference ET₀ (mm/day)</label>
+              <input value="5.2" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px;" />
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Rainfall since last run (mm)</label>
+              <input value="0" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:32px;" />
+
+              <button onClick="{{ runCalc }}" style="width:100%; padding:20px; font-size:18px; font-weight:700; background:#2c6330; color:#fff; border:none; border-radius:12px; cursor:pointer;">Run Calculation</button>
+            </div>
+
+            <div>
+              <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px;">Result</div>
+              <sc-if value="{{ hasResult }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#dbf8da; border:2px solid #9ecc9e; border-radius:16px; padding:28px; margin-bottom:16px;">
+                  <div style="font-size:14px; font-weight:600; color:#1e4e22; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Recommended run-time</div>
+                  <div style="font-size:48px; font-weight:700; color:#003306; line-height:1;">{{ result.minutes }} min</div>
+                  <div style="font-size:15px; color:#325033; margin-top:8px;">{{ result.volume }} L · net requirement {{ result.mm }} mm</div>
+                </div>
+                <button style="width:100%; padding:18px; font-size:17px; font-weight:600; background:#392a1e; color:#fff; border:none; border-radius:10px; cursor:pointer;">Confirm &amp; Log Run</button>
+              </sc-if>
+              <sc-if value="{{ noResult }}" hint-placeholder-val="{{ true }}">
+                <div style="background:#f4f2ea; border:2px dashed #d2cebf; border-radius:16px; padding:28px; color:#676357; font-size:15px; text-align:center;">Run the calculation to see a recommended irrigation time.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isManual }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ backToPicker }}" style="padding:12px 20px; font-size:14px; font-weight:600; background:#fff; color:#312e22; border:2px solid #d2cebf; border-radius:8px; cursor:pointer; margin-bottom:24px;">← Choose a different calculator</button>
+          <div style="display:grid; grid-template-columns:1fr 380px; gap:40px;">
+            <div>
+              <div style="font-size:20px; font-weight:700; color:#221f14; margin-bottom:24px;">Manual Volume — North Orchard B</div>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Zone</label>
+              <select style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px; color:#221f14; background:#fff;">
+                <option>North Orchard B</option>
+                <option>South Field 3</option>
+                <option>Greenhouse Row 1</option>
+              </select>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Target volume (L)</label>
+              <input value="1200" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px;" />
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Flow rate (L/min)</label>
+              <input value="35" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:32px;" />
+
+              <button onClick="{{ runCalc }}" style="width:100%; padding:20px; font-size:18px; font-weight:700; background:#2c6330; color:#fff; border:none; border-radius:12px; cursor:pointer;">Run Calculation</button>
+            </div>
+
+            <div>
+              <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px;">Result</div>
+              <sc-if value="{{ hasResult }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#dbf8da; border:2px solid #9ecc9e; border-radius:16px; padding:28px; margin-bottom:16px;">
+                  <div style="font-size:14px; font-weight:600; color:#1e4e22; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Recommended run-time</div>
+                  <div style="font-size:48px; font-weight:700; color:#003306; line-height:1;">34 min</div>
+                  <div style="font-size:15px; color:#325033; margin-top:8px;">1,200 L at 35 L/min</div>
+                </div>
+                <button style="width:100%; padding:18px; font-size:17px; font-weight:600; background:#392a1e; color:#fff; border:none; border-radius:10px; cursor:pointer;">Confirm &amp; Log Run</button>
+              </sc-if>
+              <sc-if value="{{ noResult }}" hint-placeholder-val="{{ true }}">
+                <div style="background:#f4f2ea; border:2px dashed #d2cebf; border-radius:16px; padding:28px; color:#676357; font-size:15px; text-align:center;">Run the calculation to see a recommended irrigation time.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDrip }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ backToPicker }}" style="padding:12px 20px; font-size:14px; font-weight:600; background:#fff; color:#312e22; border:2px solid #d2cebf; border-radius:8px; cursor:pointer; margin-bottom:24px;">← Choose a different calculator</button>
+          <div style="display:grid; grid-template-columns:1fr 380px; gap:40px;">
+            <div>
+              <div style="font-size:20px; font-weight:700; color:#221f14; margin-bottom:24px;">Drip Emitter Sizing — Greenhouse Row 1</div>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Zone</label>
+              <select style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px; color:#221f14; background:#fff;">
+                <option>Greenhouse Row 1</option>
+                <option>Greenhouse Row 2</option>
+              </select>
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Emitter count</label>
+              <input value="48" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px;" />
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Flow per emitter (L/hr)</label>
+              <input value="2" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:24px;" />
+
+              <label style="font-size:15px; font-weight:600; color:#312e22; margin-bottom:10px; display:block;">Target volume (L)</label>
+              <input value="80" readonly style="width:100%; padding:18px; font-size:17px; border:2px solid #d2cebf; border-radius:10px; margin-bottom:32px;" />
+
+              <button onClick="{{ runCalc }}" style="width:100%; padding:20px; font-size:18px; font-weight:700; background:#2c6330; color:#fff; border:none; border-radius:12px; cursor:pointer;">Run Calculation</button>
+            </div>
+
+            <div>
+              <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px;">Result</div>
+              <sc-if value="{{ hasResult }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#dbf8da; border:2px solid #9ecc9e; border-radius:16px; padding:28px; margin-bottom:16px;">
+                  <div style="font-size:14px; font-weight:600; color:#1e4e22; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Recommended run-time</div>
+                  <div style="font-size:48px; font-weight:700; color:#003306; line-height:1;">50 min</div>
+                  <div style="font-size:15px; color:#325033; margin-top:8px;">48 emitters at 2 L/hr</div>
+                </div>
+                <button style="width:100%; padding:18px; font-size:17px; font-weight:600; background:#392a1e; color:#fff; border:none; border-radius:10px; cursor:pointer;">Confirm &amp; Log Run</button>
+              </sc-if>
+              <sc-if value="{{ noResult }}" hint-placeholder-val="{{ true }}">
+                <div style="background:#f4f2ea; border:2px dashed #d2cebf; border-radius:16px; padding:28px; color:#676357; font-size:15px; text-align:center;">Run the calculation to see a recommended irrigation time.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CALCULATION HISTORY ============ -->
+  <section data-screen-label="Calculation History" style="padding:0 24px;">
+    <div style="display:flex; background:#fff; border-radius:20px; overflow:hidden; border:1px solid #e1ded3; min-height:820px;">
+
+      <nav style="width:240px; background:#0f190f; padding:28px 16px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;">
+        <div style="color:#fff; font-weight:700; font-size:17px; padding:0 12px 24px;">🌾 Ridgeline Farm</div>
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; background:{{ item.active }}; color:{{ item.color }}; font-size:15px; font-weight:600;">
+              <span>{{ item.icon }}</span>{{ item.label }}
+              <sc-if value="{{ item.soon }}"><span style="margin-left:auto; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6;">Soon</span></sc-if>
+            </div>
+            <sc-if value="{{ item.expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:2px; margin:4px 0 8px 34px;">
+                <sc-for list="{{ item.subItems }}" as="sub" hint-placeholder-count="3">
+                  <div style="padding:10px 12px; border-radius:8px; background:{{ sub.active }}; color:{{ sub.color }}; font-size:14px; font-weight:500;">{{ sub.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="flex:1; padding:40px 48px;">
+        <div style="font-size:14px; font-weight:600; color:#676357; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Irrigation</div>
+        <h1 style="font-size:32px; font-weight:700; color:#221f14; margin:0 0 32px;">Calculation history</h1>
+
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <div style="display:grid; grid-template-columns:1.2fr 1.6fr 1.4fr 1fr 1fr 1fr; padding:0 20px 12px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#676357; border-bottom:2px solid #e1ded3;">
+            <div>Date</div><div>Zone</div><div>Growth stage</div><div>Run-time</div><div>Volume</div><div>Status</div>
+          </div>
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="5">
+            <div style="display:grid; grid-template-columns:1.2fr 1.6fr 1.4fr 1fr 1fr 1fr; padding:18px 20px; font-size:16px; color:#2c291e; border-bottom:1px solid #eae8e1; align-items:center;">
+              <div>{{ h.date }}</div>
+              <div style="font-weight:600;">{{ h.zone }}</div>
+              <div style="color:#595549;">{{ h.stage }}</div>
+              <div>{{ h.runtime }}</div>
+              <div>{{ h.volume }}</div>
+              <div><span style="padding:6px 14px; border-radius:999px; background:#d0f3d0; color:#0b3e12; font-size:13px; font-weight:600;">{{ h.status }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div style="padding:0 24px 0; font-size:14px; color:#676357; max-width:1400px;">
+    <strong>Extending the shell:</strong> Assets, Crops, Tasks, Finance and Reporting slot into the same left nav as new items — each is a separate lazy-loaded Blazor RCL, so adding one never touches Irrigation's code or this shell's layout. Only flag: the color-tinted status cards and pill badges are plain HTML/CSS, so they map directly to Razor markup with no JS-only dependency.
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    hasResult: false,
+    result: { minutes: 34, volume: 1180, mm: 14.2 },
+    dashboardView: 'owner',
+    selectedCalc: null
+  };
+
+  renderVals() {
+    const swatches = [
+      { name: 'Background', color: '#f7f5ec' },
+      { name: 'Surface', color: '#ffffff' },
+      { name: 'Ink', color: '#221f14' },
+      { name: 'Primary Green', color: '#2c6330' },
+      { name: 'Earth Brown', color: '#6e4d32' },
+      { name: 'Deep Green (shell)', color: '#0f190f' },
+      { name: 'Status OK', color: '#3e8343' },
+      { name: 'Status Due', color: '#d98b09' },
+      { name: 'Status Overdue', color: '#c53637' }
+    ];
+
+    const navDefs = [
+      { icon: '💧', label: 'Irrigation', soon: false, subLabels: ['Zones', 'Run Calculator', 'Zone Designs', 'History'], activeSub: 0 },
+      { icon: '🔧', label: 'Assets', soon: true },
+      { icon: '🌱', label: 'Crops', soon: true },
+      { icon: '✅', label: 'Tasks', soon: true },
+      { icon: '💰', label: 'Finance', soon: true },
+      { icon: '📊', label: 'Reporting', soon: true }
+    ];
+    const navItems = navDefs.map((n, i) => ({
+      ...n,
+      active: i === 0 ? '#18361a' : 'transparent',
+      color: n.soon ? '#a6b1a6' : '#fff',
+      expanded: !n.soon,
+      subItems: (n.subLabels || []).map((label, si) => ({
+        label,
+        active: si === n.activeSub ? '#18361a' : 'transparent',
+        color: si === n.activeSub ? '#fff' : '#b6c1b6'
+      }))
+    }));
+
+    const zoneDefs = [
+      { name: 'North Orchard B', field: 'North Field', crop: 'Apples', status: 'On schedule', lastWatered: 'Today, 6:10am', area: '2.4 ha', kind: 'ok' },
+      { name: 'South Field 3', field: 'South Field', crop: 'Alfalfa', status: 'Due today', lastWatered: '2 days ago', area: '4.1 ha', kind: 'due' },
+      { name: 'Greenhouse Row 1', field: 'Greenhouse', crop: 'Tomatoes', status: 'On schedule', lastWatered: 'Yesterday', area: '0.3 ha', kind: 'ok' },
+      { name: 'West Pasture', field: 'West Field', crop: 'Pasture grass', status: 'Overdue', lastWatered: '5 days ago', area: '6.8 ha', kind: 'overdue' },
+      { name: 'East Orchard A', field: 'East Field', crop: 'Cherries', status: 'On schedule', lastWatered: 'Today, 5:40am', area: '1.9 ha', kind: 'ok' },
+      { name: 'South Field 4', field: 'South Field', crop: 'Alfalfa', status: 'Due today', lastWatered: '2 days ago', area: '3.6 ha', kind: 'due' }
+    ];
+    const kindStyles = {
+      ok: { bg: '#e6f8e6', border: '#b6d9b6', badgeBg: '#c2ebc2', badgeColor: '#0b3e12' },
+      due: { bg: '#fef4df', border: '#edd0a0', badgeBg: '#fed899', badgeColor: '#663400' },
+      overdue: { bg: '#ffeeeb', border: '#ffc4bd', badgeBg: '#ffc4bd', badgeColor: '#861118' }
+    };
+    const zones = zoneDefs.map(z => ({ ...z, ...kindStyles[z.kind] }));
+
+    const stageDefs = [
+      { label: 'Establishment', on: false },
+      { label: 'Mid-season', on: true },
+      { label: 'Late season', on: false }
+    ];
+    const stages = stageDefs.map(s => ({
+      label: s.label,
+      bg: s.on ? '#2c6330' : '#fff',
+      color: s.on ? '#fff' : '#312e22',
+      border: s.on ? '#2c6330' : '#d2cebf'
+    }));
+
+    const stats = [
+      { label: 'Active zones', value: '18', tone: 'neutral' },
+      { label: 'Due today', value: '3', tone: 'due' },
+      { label: 'Overdue', value: '1', tone: 'overdue' },
+      { label: 'Runs logged this week', value: '22', tone: 'neutral' }
+    ];
+    const statTone = { neutral: { bg: '#fff', border: '#dad8cd', color: '#221f14' }, due: { bg: '#fef4df', border: '#edd0a0', color: '#663400' }, overdue: { bg: '#ffeeeb', border: '#ffc4bd', color: '#861118' } };
+    const statCards = stats.map(s => ({ ...s, ...statTone[s.tone] }));
+
+    const activity = [
+      { text: 'North Orchard B — irrigation run logged (34 min)', time: '6:12am' },
+      { text: 'West Pasture flagged overdue', time: 'Yesterday' },
+      { text: 'New zone added: East Orchard A', time: '2 days ago' },
+      { text: 'South Field 3 — irrigation run logged (41 min)', time: '2 days ago' }
+    ];
+
+    const todayTasks = [
+      { name: 'West Pasture', crop: 'Pasture grass', note: 'Overdue 5 days', tone: 'overdue' },
+      { name: 'South Field 3', crop: 'Alfalfa', note: 'Due today', tone: 'due' },
+      { name: 'South Field 4', crop: 'Alfalfa', note: 'Due today', tone: 'due' }
+    ];
+    const taskTone = { overdue: { bg: '#ffeeeb', border: '#ffc4bd', badgeBg: '#ffc4bd', badgeColor: '#861118' }, due: { bg: '#fef4df', border: '#edd0a0', badgeBg: '#fed899', badgeColor: '#663400' } };
+    const todayCards = todayTasks.map(t => ({ ...t, ...taskTone[t.tone] }));
+
+    const farmTree = [
+      { field: 'North Field', zones: ['North Orchard A', 'North Orchard B'] },
+      { field: 'South Field', zones: ['South Field 3', 'South Field 4'] },
+      { field: 'East Field', zones: ['East Orchard A'] },
+      { field: 'West Field', zones: ['West Pasture'] },
+      { field: 'Greenhouse', zones: ['Greenhouse Row 1', 'Greenhouse Row 2'] }
+    ];
+
+    const history = [
+      { date: 'Jul 13, 2026', zone: 'North Orchard B', stage: 'Mid-season', runtime: '34 min', volume: '1,180 L', status: 'Completed' },
+      { date: 'Jul 11, 2026', zone: 'South Field 3', stage: 'Mid-season', runtime: '41 min', volume: '2,050 L', status: 'Completed' },
+      { date: 'Jul 10, 2026', zone: 'Greenhouse Row 1', stage: 'Establishment', runtime: '12 min', volume: '210 L', status: 'Completed' },
+      { date: 'Jul 8, 2026', zone: 'East Orchard A', stage: 'Late season', runtime: '28 min', volume: '940 L', status: 'Completed' },
+      { date: 'Jul 6, 2026', zone: 'North Orchard B', stage: 'Mid-season', runtime: '36 min', volume: '1,240 L', status: 'Completed' }
+    ];
+
+    return {
+      swatches, navItems, zones, stages, statCards, activity, todayCards, farmTree, history,
+      hasResult: this.state.hasResult,
+      noResult: !this.state.hasResult,
+      result: this.state.result,
+      runCalc: () => this.setState({ hasResult: true }),
+      isOwnerView: this.state.dashboardView === 'owner',
+      isWorkerView: this.state.dashboardView === 'worker',
+      ownerTabBg: this.state.dashboardView === 'owner' ? '#2c6330' : '#fff',
+      ownerTabColor: this.state.dashboardView === 'owner' ? '#fff' : '#312e22',
+      workerTabBg: this.state.dashboardView === 'worker' ? '#2c6330' : '#fff',
+      workerTabColor: this.state.dashboardView === 'worker' ? '#fff' : '#312e22',
+      showOwner: () => this.setState({ dashboardView: 'owner' }),
+      showWorker: () => this.setState({ dashboardView: 'worker' }),
+
+      calcOptions: [
+        { id: 'et0', icon: '💧', label: 'ET₀ Run-Time', desc: 'Reference evapotranspiration + crop coefficient → recommended run-time.' },
+        { id: 'manual', icon: '🧮', label: 'Manual Volume', desc: 'Enter a target volume and flow rate directly.' },
+        { id: 'drip', icon: '🌿', label: 'Drip Emitter Sizing', desc: 'Emitter count and flow rate → run-time for drip zones.' }
+      ].map(c => ({ ...c, onClick: () => this.setState({ selectedCalc: c.id, hasResult: false }) })),
+      selectedCalc: this.state.selectedCalc,
+      showPicker: !this.state.selectedCalc,
+      isEt0: this.state.selectedCalc === 'et0',
+      isManual: this.state.selectedCalc === 'manual',
+      isDrip: this.state.selectedCalc === 'drip',
+      backToPicker: () => this.setState({ selectedCalc: null, hasResult: false })
+    };
+  }
+}
+
+</script>
+</body>
+</html>
