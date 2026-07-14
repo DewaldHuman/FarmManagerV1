@@ -28,6 +28,8 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-farm}:${POSTGRES_PASSWORD:-farm}@db:5432/${POSTGRES_DB:-farm_platform}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_EXPIRY_MINUTES: ${JWT_EXPIRY_MINUTES:-720}
     depends_on:
       db:
         condition: service_healthy

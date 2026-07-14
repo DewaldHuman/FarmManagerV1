@@ -71,3 +71,14 @@
   font-family: var(--font-sans);
   margin-bottom: 20px;
 }
+
+.form-error {
+  color: var(--status-overdue-text);
+  background: var(--status-overdue-bg);
+  border: 1px solid var(--status-overdue-border);
+  border-radius: var(--radius-control);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}

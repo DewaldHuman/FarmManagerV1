@@ -117,6 +117,12 @@
   <data name="Login_Helper" xml:space="preserve">
     <value>Signed in as &lt;strong&gt;Worker&lt;/strong&gt; → lands on Today view. Owner/manager → Farm overview.</value>
   </data>
+  <data name="Login_Error_InvalidCredentials" xml:space="preserve">
+    <value>Incorrect username or password.</value>
+  </data>
+  <data name="Shell_SignOut" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
 
   <data name="Dashboard_Eyebrow" xml:space="preserve">
     <value>Home</value>

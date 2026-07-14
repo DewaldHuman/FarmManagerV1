@@ -116,11 +116,17 @@
   margin-bottom: 32px;
 }
 
-.app-shell__language-switcher {
+.app-shell__topbar {
   display: flex;
   justify-content: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.app-shell__language-switcher {
+  display: flex;
+  gap: 4px;
 }
 
 .lang-switch__btn {

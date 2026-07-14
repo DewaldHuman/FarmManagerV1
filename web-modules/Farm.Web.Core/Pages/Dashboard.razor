@@ -1,5 +1,6 @@
 @page "/"
 @layout AppShellLayout
+@attribute [Authorize]
 @inject IStringLocalizer<AppStrings> Localizer
 
 <div class="page-header">
@@ -7,16 +8,19 @@
         <div class="app-shell__eyebrow">@Localizer["Dashboard_Eyebrow"]</div>
         <h1 class="app-shell__title">@Localizer["Dashboard_Title"]</h1>
     </div>
-    <div class="view-toggle">
-        <button class="view-toggle__btn @(ViewMode == DashboardView.Owner ? "view-toggle__btn--active" : "")"
-                @onclick="() => SetView(DashboardView.Owner)">
-            @Localizer["Dashboard_OwnerView"]
-        </button>
-        <button class="view-toggle__btn @(ViewMode == DashboardView.Worker ? "view-toggle__btn--active" : "")"
-                @onclick="() => SetView(DashboardView.Worker)">
-            @Localizer["Dashboard_WorkerView"]
-        </button>
-    </div>
+    @if (_canToggleView)
+    {
+        <div class="view-toggle">
+            <button class="view-toggle__btn @(ViewMode == DashboardView.Owner ? "view-toggle__btn--active" : "")"
+                    @onclick="() => SetView(DashboardView.Owner)">
+                @Localizer["Dashboard_OwnerView"]
+            </button>
+            <button class="view-toggle__btn @(ViewMode == DashboardView.Worker ? "view-toggle__btn--active" : "")"
+                    @onclick="() => SetView(DashboardView.Worker)">
+                @Localizer["Dashboard_WorkerView"]
+            </button>
+        </div>
+    }
 </div>
 <div class="page-subtitle">@Localizer["Dashboard_Subtitle"]</div>
 
@@ -64,9 +68,13 @@ else
 }
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     private enum DashboardView { Owner, Worker }
 
     private DashboardView ViewMode = DashboardView.Owner;
+    private bool _canToggleView;
 
     private void SetView(DashboardView mode) => ViewMode = mode;
 
@@ -81,8 +89,27 @@ else
     private List<Activity> _activity = new();
     private List<TodayTask> _todayTasks = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            var roleClaim = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+            if (string.Equals(roleClaim, "worker", StringComparison.OrdinalIgnoreCase))
+            {
+                ViewMode = DashboardView.Worker;
+                _canToggleView = false;
+            }
+            else
+            {
+                // owner or manager (or unrecognized/missing claim — fail toward the
+                // fuller Owner view rather than silently locking out an authenticated user)
+                ViewMode = DashboardView.Owner;
+                _canToggleView = true;
+            }
+        }
+
         _stats = new List<Stat>
         {
             new(Localizer["Dashboard_Stat_ActiveZones"], "18", "neutral"),

@@ -117,6 +117,12 @@
   <data name="Login_Helper" xml:space="preserve">
     <value>As &lt;strong&gt;Werker&lt;/strong&gt; aangemeld → land op Vandag-aansig. Eienaar/bestuurder → Plaasoorsig.</value>
   </data>
+  <data name="Login_Error_InvalidCredentials" xml:space="preserve">
+    <value>Verkeerde gebruikersnaam of wagwoord.</value>
+  </data>
+  <data name="Shell_SignOut" xml:space="preserve">
+    <value>Teken uit</value>
+  </data>
 
   <data name="Dashboard_Eyebrow" xml:space="preserve">
     <value>Tuis</value>

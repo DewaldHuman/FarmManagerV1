@@ -1,9 +1,23 @@
 @inherits LayoutComponentBase
+@inject IAuthService AuthService
+@inject NavigationManager Nav
+@inject IStringLocalizer<AppStrings> Localizer
 
 <div class="app-shell">
     <NavMenu />
     <div class="app-shell__content">
-        <LanguageSwitcher />
+        <div class="app-shell__topbar">
+            <LanguageSwitcher />
+            <button class="btn btn-secondary" @onclick="HandleLogout">@Localizer["Shell_SignOut"]</button>
+        </div>
         @Body
     </div>
 </div>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Nav.NavigateTo("/login", forceLoad: true);
+    }
+}

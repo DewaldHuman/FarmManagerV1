@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://farm:farm@localhost:5432/farm_platform"
     jwt_secret: str = "change_me_too"
-    jwt_expiry_minutes: int = 60
+    jwt_expiry_minutes: int = 720
 
 
 settings = Settings()

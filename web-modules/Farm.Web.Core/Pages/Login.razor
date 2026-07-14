@@ -1,6 +1,8 @@
 @page "/login"
 @layout BlankLayout
 @inject IStringLocalizer<AppStrings> Localizer
+@inject IAuthService AuthService
+@inject NavigationManager Nav
 
 <div class="login-page">
     <div class="login-card">
@@ -18,7 +20,12 @@
             <label class="form-label" for="login-password">@Localizer["Login_Password"]</label>
             <input id="login-password" type="password" class="form-input" @bind="Password" @bind:event="oninput" />
 
-            <button class="btn btn-primary login-card__submit" @onclick="HandleSignIn">@Localizer["Login_SignIn"]</button>
+            @if (_showError)
+            {
+                <div class="form-error">@Localizer["Login_Error_InvalidCredentials"]</div>
+            }
+
+            <button class="btn btn-primary login-card__submit" @onclick="HandleSignIn" disabled="@_isSubmitting">@Localizer["Login_SignIn"]</button>
 
             <div class="login-card__helper">@((MarkupString)Localizer["Login_Helper"].Value)</div>
         </div>
@@ -28,9 +35,25 @@
 @code {
     private string Username = string.Empty;
     private string Password = string.Empty;
+    private bool _showError;
+    private bool _isSubmitting;
 
-    private void HandleSignIn()
+    private async Task HandleSignIn()
     {
-        // Wired up once Core: Users + Auth lands (plan.md).
+        _showError = false;
+        _isSubmitting = true;
+
+        var success = await AuthService.LoginAsync(Username, Password);
+
+        _isSubmitting = false;
+
+        if (success)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            _showError = true;
+        }
     }
 }
