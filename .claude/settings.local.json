@@ -13,7 +13,15 @@
       "Bash(.venv/Scripts/python -m pip install -q -r requirements.txt)",
       "Bash(powershell -Command \"Get-Process -Name dotnet -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,Path\")",
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 5257 -ErrorAction SilentlyContinue | Select-Object -First 1 OwningProcess\")",
-      "Bash(powershell -Command \"Stop-Process -Id 58492 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 58492 -Force\")",
+      "WebFetch(domain:watertankcalculator.com)",
+      "WebFetch(domain:irrigation.wsu.edu)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 5257 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess\")",
+      "Bash(python -)",
+      "PowerShell($p = Get-NetTCPConnection -LocalPort 5257 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess; if \\($p\\) { Stop-Process -Id $p -Force; \"stopped $p\" } else { \"not running\" })"
     ]
   }
 }

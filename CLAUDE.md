@@ -113,9 +113,9 @@ plan.md
 > Update this section every session — it's the fastest way for an AI assistant (or future you) to know where things stand without re-reading the whole history.
 
 - **Current phase:** Phase 1 — Foundation + Irrigation
-- **What exists:** repo scaffold — FastAPI backend (`apps/api`, SQLAlchemy + Alembic init, `core` schema, health endpoint only, no real auth/domain logic yet) and Blazor WASM host (`apps/web`) + `Farm.Web.Core` RCL (shared shell/nav, design tokens, Login and Dashboard screens, UI-only — not wired to real auth)
+- **What exists:** repo scaffold — FastAPI backend (`apps/api`, SQLAlchemy + Alembic init, `core` schema, health endpoint only, no real auth/domain logic yet); Blazor WASM host (`apps/web`) + `Farm.Web.Core` RCL (shared shell/nav, design tokens, Login and Dashboard screens, UI-only — not wired to real auth); `Farm.Web.Irrigation` RCL (lazy-loaded, proves the plugin pattern) with 27 client-side calculators at `/irrigation/run-calculator` (formulas verified against irrigation.wsu.edu and watertankcalculator.com sources — see plan.md Decisions Log 2026-07-14), backed by the standalone zero-dependency `Farm.Irrigation.Calculators` C# library (metric units, 37 xunit tests)
 - **What's in progress:** —
-- **Next concrete step:** Core: Users + Auth (JWT, roles), Farm → Field/Block → Zone registry (CRUD + UI), then Irrigation module (data model + calculation engine)
+- **Next concrete step:** Core: Users + Auth (JWT, roles), Farm → Field/Block → Zone registry (CRUD + UI), then Irrigation backend module (data model + engine.py for authoritative, logged calculation runs — the client-side C# calculators stay for instant feedback)
 
 ---
 
