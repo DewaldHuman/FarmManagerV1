@@ -20,7 +20,6 @@ C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irr
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\scopedcss\bundle\Farm.Web.Irrigation.styles.css
-C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\compressed\5fcg6a9m4s-eup6hh5pvc.gz
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\staticwebassets.build.json
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\staticwebassets.build.json.cache
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\staticwebassets.development.json
@@ -36,3 +35,5 @@ C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irr
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\refint\Farm.Web.Irrigation.dll
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\Farm.Web.Irrigation.pdb
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\ref\Farm.Web.Irrigation.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\bin\Debug\net9.0\af\Farm.Web.Core.resources.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Irrigation\obj\Debug\net9.0\compressed\5fcg6a9m4s-gj5opaozu2.gz

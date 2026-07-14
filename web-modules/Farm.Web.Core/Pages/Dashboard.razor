@@ -1,23 +1,24 @@
 @page "/"
 @layout AppShellLayout
+@inject IStringLocalizer<AppStrings> Localizer
 
 <div class="page-header">
     <div>
-        <div class="app-shell__eyebrow">Home</div>
-        <h1 class="app-shell__title">Dashboard</h1>
+        <div class="app-shell__eyebrow">@Localizer["Dashboard_Eyebrow"]</div>
+        <h1 class="app-shell__title">@Localizer["Dashboard_Title"]</h1>
     </div>
     <div class="view-toggle">
         <button class="view-toggle__btn @(ViewMode == DashboardView.Owner ? "view-toggle__btn--active" : "")"
                 @onclick="() => SetView(DashboardView.Owner)">
-            Owner / Manager view
+            @Localizer["Dashboard_OwnerView"]
         </button>
         <button class="view-toggle__btn @(ViewMode == DashboardView.Worker ? "view-toggle__btn--active" : "")"
                 @onclick="() => SetView(DashboardView.Worker)">
-            Worker view
+            @Localizer["Dashboard_WorkerView"]
         </button>
     </div>
 </div>
-<div class="page-subtitle">Same login, different landing screen based on role.</div>
+<div class="page-subtitle">@Localizer["Dashboard_Subtitle"]</div>
 
 @if (ViewMode == DashboardView.Owner)
 {
@@ -31,7 +32,7 @@
         }
     </div>
 
-    <h3 class="section-heading">Recent activity</h3>
+    <h3 class="section-heading">@Localizer["Dashboard_RecentActivity"]</h3>
     <div class="activity-list">
         @foreach (var item in _activity)
         {
@@ -44,7 +45,7 @@
 }
 else
 {
-    <h3 class="section-heading section-heading--lg">What needs doing today</h3>
+    <h3 class="section-heading section-heading--lg">@Localizer["Dashboard_WhatNeedsDoing"]</h3>
     <div class="today-list">
         @foreach (var task in _todayTasks)
         {
@@ -55,7 +56,7 @@ else
                 </div>
                 <div class="today-card__actions">
                     <div class="pill pill-@task.Tone">@task.Note</div>
-                    <button class="btn btn-primary">Run</button>
+                    <button class="btn btn-primary">@Localizer["Dashboard_Run"]</button>
                 </div>
             </div>
         }
@@ -73,26 +74,36 @@ else
     private sealed record Activity(string Text, string Time);
     private sealed record TodayTask(string Name, string Crop, string Note, string Tone);
 
-    private readonly List<Stat> _stats = new()
-    {
-        new("Active zones", "18", "neutral"),
-        new("Due today", "3", "due"),
-        new("Overdue", "1", "overdue"),
-        new("Runs logged this week", "22", "neutral"),
-    };
+    // Mock/demo data — replace with real data-bound content once Core: Farm/Zone
+    // registry + Irrigation data model land (plan.md Phase 1). Localized in the
+    // meantime since it renders as real UI text today.
+    private List<Stat> _stats = new();
+    private List<Activity> _activity = new();
+    private List<TodayTask> _todayTasks = new();
 
-    private readonly List<Activity> _activity = new()
+    protected override void OnInitialized()
     {
-        new("North Orchard B — irrigation run logged (34 min)", "6:12am"),
-        new("West Pasture flagged overdue", "Yesterday"),
-        new("New zone added: East Orchard A", "2 days ago"),
-        new("South Field 3 — irrigation run logged (41 min)", "2 days ago"),
-    };
+        _stats = new List<Stat>
+        {
+            new(Localizer["Dashboard_Stat_ActiveZones"], "18", "neutral"),
+            new(Localizer["Dashboard_Stat_DueToday"], "3", "due"),
+            new(Localizer["Dashboard_Stat_Overdue"], "1", "overdue"),
+            new(Localizer["Dashboard_Stat_RunsLoggedThisWeek"], "22", "neutral"),
+        };
 
-    private readonly List<TodayTask> _todayTasks = new()
-    {
-        new("West Pasture", "Pasture grass", "Overdue 5 days", "overdue"),
-        new("South Field 3", "Alfalfa", "Due today", "due"),
-        new("South Field 4", "Alfalfa", "Due today", "due"),
-    };
+        _activity = new List<Activity>
+        {
+            new(Localizer["Dashboard_Activity_1"], "6:12am"),
+            new(Localizer["Dashboard_Activity_2"], Localizer["Dashboard_Time_Yesterday"]),
+            new(Localizer["Dashboard_Activity_3"], Localizer["Dashboard_Time_2DaysAgo"]),
+            new(Localizer["Dashboard_Activity_4"], Localizer["Dashboard_Time_2DaysAgo"]),
+        };
+
+        _todayTasks = new List<TodayTask>
+        {
+            new(Localizer["Dashboard_Task_WestPasture_Name"], Localizer["Dashboard_Task_WestPasture_Crop"], Localizer["Dashboard_Task_WestPasture_Note"], "overdue"),
+            new(Localizer["Dashboard_Task_SouthField3_Name"], Localizer["Dashboard_Task_Alfalfa"], Localizer["Dashboard_Task_DueToday"], "due"),
+            new(Localizer["Dashboard_Task_SouthField4_Name"], Localizer["Dashboard_Task_Alfalfa"], Localizer["Dashboard_Task_DueToday"], "due"),
+        };
+    }
 }

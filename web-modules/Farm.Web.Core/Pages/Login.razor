@@ -1,25 +1,26 @@
 @page "/login"
 @layout BlankLayout
+@inject IStringLocalizer<AppStrings> Localizer
 
 <div class="login-page">
     <div class="login-card">
         <div class="login-card__brand">
-            <div class="login-card__eyebrow">Farm Platform</div>
-            <h2 class="login-card__headline">Everything the farm runs on, in one place.</h2>
-            <p class="login-card__copy">Irrigation today. Assets, crops, tasks and finance as they come online — same shell, same login.</p>
+            <div class="login-card__eyebrow">@Localizer["Login_Eyebrow"]</div>
+            <h2 class="login-card__headline">@Localizer["Login_Headline"]</h2>
+            <p class="login-card__copy">@Localizer["Login_Copy"]</p>
         </div>
         <div class="login-card__form">
-            <h1>Sign in</h1>
+            <h1>@Localizer["Login_SignIn"]</h1>
 
-            <label class="form-label" for="login-username">Email or username</label>
+            <label class="form-label" for="login-username">@Localizer["Login_EmailOrUsername"]</label>
             <input id="login-username" class="form-input" @bind="Username" @bind:event="oninput" />
 
-            <label class="form-label" for="login-password">Password</label>
+            <label class="form-label" for="login-password">@Localizer["Login_Password"]</label>
             <input id="login-password" type="password" class="form-input" @bind="Password" @bind:event="oninput" />
 
-            <button class="btn btn-primary login-card__submit" @onclick="HandleSignIn">Sign in</button>
+            <button class="btn btn-primary login-card__submit" @onclick="HandleSignIn">@Localizer["Login_SignIn"]</button>
 
-            <div class="login-card__helper">Signed in as <strong>Worker</strong> → lands on Today view. Owner/manager → Farm overview.</div>
+            <div class="login-card__helper">@((MarkupString)Localizer["Login_Helper"].Value)</div>
         </div>
     </div>
 </div>

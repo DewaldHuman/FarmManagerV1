@@ -40,8 +40,11 @@ Full rationale and diagrams live in `docs/design.md` (the original high-level de
 | Background jobs | APScheduler in-process (upgrade to Celery + Redis only if justified) |
 | Packaging | Docker Compose: `app`, `db` |
 | Reverse proxy | Caddy |
+| Localization | `Microsoft.Extensions.Localization` (resx-based `IStringLocalizer<T>`), English default + Afrikaans (`af`); client-side only for now via `ILanguageService`/browser `localStorage` — seam left for per-user backend persistence once Core: Users + Auth ships |
 
 > Prisma's Python client was considered but is unmaintained (deprecated March 2025, following Prisma's core rewrite from Rust to TypeScript) — not used for that reason.
+
+> Localization currently covers only `Farm.Web.Core` chrome (nav, shell, login, dashboard) — `Farm.Web.Irrigation`'s `RunCalculator.razor` (~300 hardcoded strings across 27 calculators) is explicitly deferred to a future pass and has zero localization touchpoints today. Requires `<SatelliteResourceLanguages>en;af</SatelliteResourceLanguages>` and `<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>` in `apps/web/Farm.Web.Host.csproj` — the latter is required for Blazor WASM to allow switching `CurrentCulture`/`CurrentUICulture` away from the build-time default at runtime (confirmed by testing; omitting it throws "Blazor detected a change in the application's culture..."). Calculator numeric formatting is unaffected regardless of UI language since `RunCalculator.razor` always parses/formats with an explicit `CultureInfo.InvariantCulture`.
 
 > Frontend is C#/Blazor WASM rather than React so the whole stack stays statically typed and each feature module can be a real compiled unit (Razor Class Library) rather than just a folder convention. Trade-off accepted: true drop-in-without-rebuild plugin loading is harder in .NET's assembly model than in JS — modules are lazy-loaded at runtime but still need to be referenced by the host project at build time.
 
@@ -113,7 +116,7 @@ plan.md
 > Update this section every session — it's the fastest way for an AI assistant (or future you) to know where things stand without re-reading the whole history.
 
 - **Current phase:** Phase 1 — Foundation + Irrigation
-- **What exists:** repo scaffold — FastAPI backend (`apps/api`, SQLAlchemy + Alembic init, `core` schema, health endpoint only, no real auth/domain logic yet); Blazor WASM host (`apps/web`) + `Farm.Web.Core` RCL (shared shell/nav, design tokens, Login and Dashboard screens, UI-only — not wired to real auth); `Farm.Web.Irrigation` RCL (lazy-loaded, proves the plugin pattern) with 27 client-side calculators at `/irrigation/run-calculator` (formulas verified against irrigation.wsu.edu and watertankcalculator.com sources — see plan.md Decisions Log 2026-07-14), backed by the standalone zero-dependency `Farm.Irrigation.Calculators` C# library (metric units, 37 xunit tests)
+- **What exists:** repo scaffold — FastAPI backend (`apps/api`, SQLAlchemy + Alembic init, `core` schema, health endpoint only, no real auth/domain logic yet); Blazor WASM host (`apps/web`) + `Farm.Web.Core` RCL (shared shell/nav, design tokens, Login and Dashboard screens, UI-only — not wired to real auth; English/Afrikaans localization wired for this chrome, switchable via a nav-bar language toggle, persisted client-side in `localStorage`); `Farm.Web.Irrigation` RCL (lazy-loaded, proves the plugin pattern) with 27 client-side calculators at `/irrigation/run-calculator` (formulas verified against irrigation.wsu.edu and watertankcalculator.com sources — see plan.md Decisions Log 2026-07-14), backed by the standalone zero-dependency `Farm.Irrigation.Calculators` C# library (metric units, 37 xunit tests) — not yet localized
 - **What's in progress:** —
 - **Next concrete step:** Core: Users + Auth (JWT, roles), Farm → Field/Block → Zone registry (CRUD + UI), then Irrigation backend module (data model + engine.py for authoritative, logged calculation runs — the client-side C# calculators stay for instant feedback)
 

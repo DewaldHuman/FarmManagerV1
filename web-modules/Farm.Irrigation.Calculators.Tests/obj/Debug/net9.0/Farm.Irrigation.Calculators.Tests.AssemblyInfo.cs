@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Farm.Irrigation.Calculators.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5591beb48c2dd2af905889445f19a74b9a47cc44")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1c4c49b3655513591484534f3ebda1c0b46e3bd2")]
 [assembly: System.Reflection.AssemblyProductAttribute("Farm.Irrigation.Calculators.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Farm.Irrigation.Calculators.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

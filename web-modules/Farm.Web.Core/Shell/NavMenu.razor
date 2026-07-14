@@ -1,7 +1,8 @@
 @inject NavigationManager Nav
+@inject IStringLocalizer<AppStrings> Localizer
 
 <nav class="app-shell__nav">
-    <div class="app-shell__farm-name">🌾 Ridgeline Farm</div>
+    <div class="app-shell__farm-name">@Localizer["NavMenu_FarmName"]</div>
 
     @foreach (var item in _navItems)
     {
@@ -17,7 +18,7 @@
             {
                 <div class="app-shell__nav-item app-shell__nav-item--soon">
                     <span>@item.Icon</span>@item.Label
-                    <span class="app-shell__soon-tag">Soon</span>
+                    <span class="app-shell__soon-tag">@Localizer["NavMenu_Soon"]</span>
                 </div>
             }
 
@@ -42,21 +43,26 @@
 
     private sealed record NavItem(string Icon, string Label, string? Href, IReadOnlyList<SubNavItem>? SubItems = null);
 
-    private readonly List<NavItem> _navItems = new()
+    private List<NavItem> _navItems = new();
+
+    protected override void OnInitialized()
     {
-        new("💧", "Irrigation", "/irrigation/zones", new List<SubNavItem>
+        _navItems = new List<NavItem>
         {
-            new("Zones", "/irrigation/zones"),
-            new("Run Calculator", "/irrigation/run-calculator"),
-            new("Zone Designs", "/irrigation/zone-designs"),
-            new("History", "/irrigation/history"),
-        }),
-        new("🔧", "Assets", null),
-        new("🌱", "Crops", null),
-        new("✅", "Tasks", null),
-        new("💰", "Finance", null),
-        new("📊", "Reporting", null),
-    };
+            new("💧", Localizer["NavMenu_Irrigation"], "/irrigation/zones", new List<SubNavItem>
+            {
+                new(Localizer["NavMenu_Sub_Zones"], "/irrigation/zones"),
+                new(Localizer["NavMenu_Sub_RunCalculator"], "/irrigation/run-calculator"),
+                new(Localizer["NavMenu_Sub_ZoneDesigns"], "/irrigation/zone-designs"),
+                new(Localizer["NavMenu_Sub_History"], "/irrigation/history"),
+            }),
+            new("🔧", Localizer["NavMenu_Assets"], null),
+            new("🌱", Localizer["NavMenu_Crops"], null),
+            new("✅", Localizer["NavMenu_Tasks"], null),
+            new("💰", Localizer["NavMenu_Finance"], null),
+            new("📊", Localizer["NavMenu_Reporting"], null),
+        };
+    }
 
     private bool IsActive(string href, bool matchPrefix)
     {

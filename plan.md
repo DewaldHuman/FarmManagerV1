@@ -7,9 +7,9 @@ Living roadmap and task tracker. Update this as work happens — check off tasks
 ## Status Snapshot
 
 - **Active phase:** Phase 1 — Foundation + Irrigation
-- **Last updated:** 2026-07-13
+- **Last updated:** 2026-07-14
 - **Blockers:** none
-- **Just landed:** repo scaffold (FastAPI backend + Blazor WASM host/Farm.Web.Core RCL), shared shell/nav + design tokens, Login and Dashboard screens; 15 irrigation calculators in a lazy-loaded `Farm.Web.Irrigation` module backed by the standalone `Farm.Irrigation.Calculators` C# library — see Decisions Log
+- **Just landed:** English/Afrikaans localization for the `Farm.Web.Core` chrome (nav, shell, login, dashboard) via `Microsoft.Extensions.Localization` + resx, switchable at runtime, persisted client-side — see Decisions Log
 
 ---
 
@@ -27,6 +27,7 @@ Goal: running end-to-end on the farm PC via Docker Compose — auth, farm/field/
 - [ ] Core: Users + Auth (login, JWT, roles: owner/manager/worker)
 - [ ] Core: Farm → Field/Block → Zone registry (CRUD + basic UI)
 - [ ] Core: Settings (units, timezone, default crop coefficients)
+- [ ] Core: per-user language preference persistence (backend) — once Core: Users + Auth lands, extend `LanguageService` (`web-modules/Farm.Web.Core/Localization/LanguageService.cs`) to persist server-side instead of/in addition to `localStorage`; `ILanguageService`'s public shape shouldn't need to change, only the implementation
 - [ ] Irrigation: data model (IrrigationZone, IrrigationSystem, Schedule, WaterSource, CalculationRun)
 - [ ] Irrigation: calculation engine (pure library) — ET₀, crop coefficient adjustment, net irrigation requirement, run-time from flow rate
 - [ ] Irrigation: manual weather input (API integration deferred to Phase 1.5)
@@ -72,6 +73,7 @@ Goal: running end-to-end on the farm PC via Docker Compose — auth, farm/field/
 
 > One line per significant decision, newest first. If a decision needs more explanation, link to a file in `docs/decisions/`.
 
+- 2026-07-14 — **Localization (chrome only):** added English/Afrikaans support via `Microsoft.Extensions.Localization` + resx satellites in `Farm.Web.Core` (`Localization/AppStrings.resx` + `.af.resx`), covering `NavMenu`, `AppShellLayout`/`BlankLayout`, `Login`, `Dashboard`. Culture code standardized on neutral `af` (not `af-ZA`). Culture is bootstrapped in `apps/web/Program.cs` after `WebAssemblyHostBuilder.Build()` but before `RunAsync()`, reading a stored preference from `localStorage` via `wwwroot/js/culture.js`. `ILanguageService`/`LanguageService` persist client-side only for now (no Users/Auth backend exists yet) — designed so a future per-user backend-persisted preference can replace the implementation without changing the interface (see new Phase 1 checklist item). A language toggle (`LanguageSwitcher.razor`) lives in `AppShellLayout` (visible only after "login", i.e. not on the `Login` page itself, which still renders in whichever language was last stored). **Required an extra fix beyond the initial plan:** Blazor WASM refuses to switch `CurrentCulture`/`CurrentUICulture` away from the build-time default at runtime unless `<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>` is set in `apps/web/Farm.Web.Host.csproj` (confirmed by testing — omitting it throws "Blazor detected a change in the application's culture..."); also `CurrentCulture` and `CurrentUICulture` must be set to the *same* culture at bootstrap (an earlier attempt pinned `CurrentCulture` to `InvariantCulture` while `CurrentUICulture` tracked the chosen language, which tripped the same error) — numeric formatting stays safe regardless, since `RunCalculator.razor` already explicitly passes `CultureInfo.InvariantCulture` at every parse/format call site. `Farm.Web.Irrigation`'s `RunCalculator.razor` (~300 hardcoded strings across 27 calculators) is explicitly out of scope for this pass — deferred to a future pass, zero changes made to it, browser-verified still 100% English with `af` active. Browser-verified: full EN↔AF round-trip on nav/dashboard/login, satellite assembly (`af/Farm.Web.Core.resources.wasm`) confirmed present in `blazor.boot.json`, calculator output still shows `220,235 L` / `7.8 mm` (invariant formatting) with Afrikaans active.
 - 2026-07-13 — Chose modular monolith over microservices (single-farm LAN scale doesn't justify the ops overhead)
 - 2026-07-13 — Initially chose NestJS + React + Postgres as stack
 - 2026-07-13 — Switched backend to Python (FastAPI) per preference; considered Prisma for ORM but its Python client is unmaintained (deprecated March 2025) — chose SQLAlchemy 2.x + Alembic instead (see CLAUDE.md for full table)

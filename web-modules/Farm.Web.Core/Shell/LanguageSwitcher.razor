@@ -1,0 +1,16 @@
+@using Farm.Web.Core.Localization
+@inject ILanguageService LanguageService
+
+<div class="app-shell__language-switcher">
+    @foreach (var lang in LanguageService.AvailableLanguages)
+    {
+        <button class="lang-switch__btn @(LanguageService.CurrentLanguage == lang.Code ? "lang-switch__btn--active" : "")"
+                @onclick="() => Switch(lang.Code)">
+            @lang.Code.ToUpperInvariant()
+        </button>
+    }
+</div>
+
+@code {
+    private async Task Switch(string code) => await LanguageService.SetLanguageAsync(code);
+}

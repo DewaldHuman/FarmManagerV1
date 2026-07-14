@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "Farm.Web.Host",
   "resources": {
-    "hash": "sha256-u9dZUVIrvoAjBfpjfkcpisjcHg4cU7NuBK/rjg6FqXY=",
+    "hash": "sha256-ysIVcU5XTxw8Kov7CtT5+DolcmLXpvvjxO+joN1mcLU=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Authorization.pfbiju6amj.wasm": "Microsoft.AspNetCore.Authorization.wasm",
       "Microsoft.AspNetCore.Components.810mhbyxc5.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -19,6 +19,8 @@
       "Microsoft.Extensions.FileProviders.Abstractions.2grjsn0qu5.wasm": "Microsoft.Extensions.FileProviders.Abstractions.wasm",
       "Microsoft.Extensions.FileProviders.Physical.glqvdrwq5q.wasm": "Microsoft.Extensions.FileProviders.Physical.wasm",
       "Microsoft.Extensions.FileSystemGlobbing.s7g7aphvz5.wasm": "Microsoft.Extensions.FileSystemGlobbing.wasm",
+      "Microsoft.Extensions.Localization.fabn214ch4.wasm": "Microsoft.Extensions.Localization.wasm",
+      "Microsoft.Extensions.Localization.Abstractions.b3ed5lc8t0.wasm": "Microsoft.Extensions.Localization.Abstractions.wasm",
       "Microsoft.Extensions.Logging.afdpp7klvr.wasm": "Microsoft.Extensions.Logging.wasm",
       "Microsoft.Extensions.Logging.Abstractions.1huhtjyqlf.wasm": "Microsoft.Extensions.Logging.Abstractions.wasm",
       "Microsoft.Extensions.Options.v58qjghzas.wasm": "Microsoft.Extensions.Options.wasm",
@@ -198,17 +200,16 @@
       "dotnet.native.qc8g39g30v.js": "dotnet.native.js",
       "dotnet.native.boem75ye5i.wasm": "dotnet.native.wasm",
       "dotnet.runtime.opaiwunc3t.js": "dotnet.runtime.js",
-      "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
-      "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
-      "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "Farm.Irrigation.Calculators.s8mexx3zc6.wasm": "Farm.Irrigation.Calculators.wasm",
-      "Farm.Web.Core.z5qi8cuurq.wasm": "Farm.Web.Core.wasm",
-      "Farm.Web.Irrigation.n5gokypqij.wasm": "Farm.Web.Irrigation.wasm",
-      "Farm.Web.Core.zzwl52rl1f.pdb": "Farm.Web.Core.pdb",
-      "Farm.Web.Irrigation.niyo9hmx3s.pdb": "Farm.Web.Irrigation.pdb",
-      "Farm.Irrigation.Calculators.fkl441k7gn.pdb": "Farm.Irrigation.Calculators.pdb",
-      "Farm.Web.Host.7t7s0opzzw.wasm": "Farm.Web.Host.wasm",
-      "Farm.Web.Host.0k3gygm5vn.pdb": "Farm.Web.Host.pdb"
+      "icudt.oh1zvcfom8.dat": "icudt.dat",
+      "Farm.Irrigation.Calculators.4nkifno3ic.wasm": "Farm.Irrigation.Calculators.wasm",
+      "Farm.Web.Core.h2gyqussja.wasm": "Farm.Web.Core.wasm",
+      "Farm.Web.Irrigation.okkv5zrm7v.wasm": "Farm.Web.Irrigation.wasm",
+      "Farm.Web.Core.x7ss4ttuw4.pdb": "Farm.Web.Core.pdb",
+      "Farm.Web.Irrigation.gyb2f4e1ko.pdb": "Farm.Web.Irrigation.pdb",
+      "Farm.Irrigation.Calculators.eio44r6jg7.pdb": "Farm.Irrigation.Calculators.pdb",
+      "Farm.Web.Core.resources.2qqar21pb4.wasm": "Farm.Web.Core.resources.wasm",
+      "Farm.Web.Host.ffgg0agrhf.wasm": "Farm.Web.Host.wasm",
+      "Farm.Web.Host.ukaofkc4xo.pdb": "Farm.Web.Host.pdb"
     },
     "jsModuleNative": {
       "dotnet.native.qc8g39g30v.js": "sha256-SvVveFrqwSE/8qjn/DA3aVnuMXhmK4Ln+euLxQu8azU="
@@ -220,9 +221,7 @@
       "dotnet.native.boem75ye5i.wasm": "sha256-NdFSj8MM4tvhMRG2JPNXYDnzqZno/RjOpUq0dxHcPVw="
     },
     "icu": {
-      "icudt_CJK.tjcz0u77k5.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
-      "icudt_EFIGS.tptq2av103.dat": "sha256-8fItetYY8kQ0ww6oxwTLiT3oXlBwHKumbeP2pRF4yTc=",
-      "icudt_no_CJK.lfu7j35m59.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
+      "icudt.oh1zvcfom8.dat": "sha256-tO5O5YzMTVSaKBboxAqezOQL9ewmupzV2JrB5Rkc8a4="
     },
     "coreAssembly": {
       "System.Runtime.InteropServices.JavaScript.cz9fygobmj.wasm": "sha256-uD2Lw+TYUBfzFB4VpLtou79zdFBdkfNK+T8mB6R4W6Q=",
@@ -245,6 +244,8 @@
       "Microsoft.Extensions.FileProviders.Abstractions.2grjsn0qu5.wasm": "sha256-ThY7SCHxV5+LzxyV0lJll8RXLsVk9Uwtx8IPQ2kNIU8=",
       "Microsoft.Extensions.FileProviders.Physical.glqvdrwq5q.wasm": "sha256-ZJH0MAwA+AEuklgy4c75+M2TM7wKvzClLttd2S8vybY=",
       "Microsoft.Extensions.FileSystemGlobbing.s7g7aphvz5.wasm": "sha256-2GvwlN/qwqUiSGf28z/8CSnIWptKwWUIPckb3iyCYfE=",
+      "Microsoft.Extensions.Localization.fabn214ch4.wasm": "sha256-5772Qpfa65w3PY5iNYVi1IQMmP44TTVRd4Y1/v7Axps=",
+      "Microsoft.Extensions.Localization.Abstractions.b3ed5lc8t0.wasm": "sha256-l+GsQ5ASaq8hO3cYrhWrjFyvl2qEzbVyBCR1ij25W7M=",
       "Microsoft.Extensions.Logging.afdpp7klvr.wasm": "sha256-yjofHyMJ/9eaRpC14z3UZilBkkuEwha6RtKKVXYV2pU=",
       "Microsoft.Extensions.Logging.Abstractions.1huhtjyqlf.wasm": "sha256-e0J+IbqmRi+wt9Oo8Idqd4fOt3QNp87EKIJpa4FCAuk=",
       "Microsoft.Extensions.Options.v58qjghzas.wasm": "sha256-067gwinXgDcKWmodc2GLciJ9kECsqP1yM1XtjlZMKgo=",
@@ -418,23 +419,28 @@
       "WindowsBase.5kidsc9cwj.wasm": "sha256-NXuFeS6KFuUEtK1L1ceaBLGv312S++f1mR9Kto+Hy18=",
       "mscorlib.xijg4wlfka.wasm": "sha256-2dqEBrWjuT5attumE5+LUeFO1cctfy00HBENhAlT9BY=",
       "netstandard.kp5ley9tiy.wasm": "sha256-KHbuelfx0rNF1OUK5LTGk1sytSnmzL/Ew2Dy2d+dZ8E=",
-      "Farm.Web.Core.z5qi8cuurq.wasm": "sha256-CZOzUsCYPyni5WuxF14GdT7ybUUiUGolECrJ/RjCTuY=",
-      "Farm.Web.Host.7t7s0opzzw.wasm": "sha256-dTluDy91YR70RcvJgfBbul5eJr2uV8aU+hztBz0Kyeg="
+      "Farm.Web.Core.h2gyqussja.wasm": "sha256-2dcxu5KXKVdJRzHsj6pH7BesQmOeMVM8L/1N8Mv108Q=",
+      "Farm.Web.Host.ffgg0agrhf.wasm": "sha256-1SDrsw98TvmppgnXKtleq9U/8XJ7KhbD6ypzohzZ4vE="
     },
     "pdb": {
-      "Farm.Web.Core.zzwl52rl1f.pdb": "sha256-T/cT/0jn1lBiLdDVW/p8rXD45Ec9yUj8dr/5p1TNOVA=",
-      "Farm.Web.Host.0k3gygm5vn.pdb": "sha256-ALhK2bZngbELBRKAvdBnZ0+5ndH0IZexC+q4S5mZlkA="
+      "Farm.Web.Core.x7ss4ttuw4.pdb": "sha256-IxqgxXVKSg/Oge2VtStruuDTkDOBGRnZp8Si8w7pcpc=",
+      "Farm.Web.Host.ukaofkc4xo.pdb": "sha256-jkr1lh2mHxZHYTKrplTzqwIIoSe/7K64huczgFNT370="
+    },
+    "satelliteResources": {
+      "af": {
+        "Farm.Web.Core.resources.2qqar21pb4.wasm": "sha256-NsewRKP3sbuEd3mEhPB7pz4TR70i8UpKLBhh632gGkY="
+      }
     },
     "lazyAssembly": {
-      "Farm.Irrigation.Calculators.s8mexx3zc6.wasm": "sha256-HD0bk/ga2eJBAbrKchMYGxyMUKlhXJkjAp+jGPx2B3c=",
-      "Farm.Web.Irrigation.n5gokypqij.wasm": "sha256-y9OUHeTqDFV8wkCbdrsqhjKcNmSonilWQfkBgoBS5nE=",
-      "Farm.Web.Irrigation.niyo9hmx3s.pdb": "sha256-v/GBigzbSIl+8S6D3e6aMD9udV7V0f5SvGQkK4oGjo8=",
-      "Farm.Irrigation.Calculators.fkl441k7gn.pdb": "sha256-L24Bg33ZhV9xqTbla/D9MgREAZPRuJOWxBWAYB/Q7kQ="
+      "Farm.Irrigation.Calculators.4nkifno3ic.wasm": "sha256-AFyHZO60Jrmg6eM9CtI/FOOHHHTjKR8psVnWesZ3tGc=",
+      "Farm.Web.Irrigation.okkv5zrm7v.wasm": "sha256-GMXRNxEdtPKMU3kck8Tw3znJMJbZl9sadMCzWeAl8r8=",
+      "Farm.Web.Irrigation.gyb2f4e1ko.pdb": "sha256-CMgRJps4MrlU44wul2AlHeRZYBWnUzE2agHCuemjqT8=",
+      "Farm.Irrigation.Calculators.eio44r6jg7.pdb": "sha256-FkXeElkDwNds9eV7jjWEe6on3lhgAZimDXnv6PMZYf0="
     }
   },
   "cacheBootResources": true,
   "debugLevel": -1,
-  "globalizationMode": "sharded",
+  "globalizationMode": "all",
   "extensions": {
     "blazor": {}
   }

@@ -16,7 +16,6 @@ C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Cor
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\scopedcss\bundle\Farm.Web.Core.styles.css
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\compressed\rhaix5xix5-0krl639ari.gz
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\compressed\uf0p2ni0n2-13103oqdrr.gz
-C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\compressed\nyybpgzd8k-s6y1zoo3xc.gz
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\compressed\w7tqg08ojc-1027ab7an7.gz
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\staticwebassets.build.json
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\staticwebassets.build.json.cache
@@ -32,3 +31,10 @@ C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Cor
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\refint\Farm.Web.Core.dll
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\Farm.Web.Core.pdb
 C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\ref\Farm.Web.Core.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\bin\Debug\net9.0\af\Farm.Web.Core.resources.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\Farm.Web.Core.Localization.AppStrings.resources
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\Farm.Web.Core.Localization.AppStrings.af.resources
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\Farm.Web.Core.csproj.GenerateResource.cache
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\af\Farm.Web.Core.resources.cs
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\af\Farm.Web.Core.resources.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Web.Core\obj\Debug\net9.0\compressed\nyybpgzd8k-2kymqkuiu3.gz

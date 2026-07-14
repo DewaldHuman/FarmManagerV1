@@ -52,12 +52,12 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>s6y1zoo3xc</Fingerprint>
-      <Integrity>VAYXnOOPLAdkl8ItJKOyMTsSA9bTUff5XlQn67XXtvk=</Integrity>
+      <Fingerprint>2kymqkuiu3</Fingerprint>
+      <Integrity>jh2yMZHCGXKSo7Bb0bdaEYk54nfT+Fnw7kgHOM2PbR4=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <FileLength>1978</FileLength>
-      <LastWriteTime>Mon, 13 Jul 2026 15:24:20 GMT</LastWriteTime>
+      <FileLength>2474</FileLength>
+      <LastWriteTime>Tue, 14 Jul 2026 06:28:26 GMT</LastWriteTime>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\shell.css'))</OriginalItemSpec>
     </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\tokens.css'))">

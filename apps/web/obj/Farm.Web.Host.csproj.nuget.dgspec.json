@@ -224,6 +224,10 @@
             "Microsoft.AspNetCore.Components.Web": {
               "target": "Package",
               "version": "[9.0.17, )"
+            },
+            "Microsoft.Extensions.Localization": {
+              "target": "Package",
+              "version": "[9.0.17, )"
             }
           },
           "imports": [

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="NavMenu_FarmName" xml:space="preserve">
+    <value>🌾 Ridgeline Farm</value>
+  </data>
+  <data name="NavMenu_Soon" xml:space="preserve">
+    <value>Soon</value>
+  </data>
+  <data name="NavMenu_Irrigation" xml:space="preserve">
+    <value>Irrigation</value>
+  </data>
+  <data name="NavMenu_Sub_Zones" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="NavMenu_Sub_RunCalculator" xml:space="preserve">
+    <value>Run Calculator</value>
+  </data>
+  <data name="NavMenu_Sub_ZoneDesigns" xml:space="preserve">
+    <value>Zone Designs</value>
+  </data>
+  <data name="NavMenu_Sub_History" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="NavMenu_Assets" xml:space="preserve">
+    <value>Assets</value>
+  </data>
+  <data name="NavMenu_Crops" xml:space="preserve">
+    <value>Crops</value>
+  </data>
+  <data name="NavMenu_Tasks" xml:space="preserve">
+    <value>Tasks</value>
+  </data>
+  <data name="NavMenu_Finance" xml:space="preserve">
+    <value>Finance</value>
+  </data>
+  <data name="NavMenu_Reporting" xml:space="preserve">
+    <value>Reporting</value>
+  </data>
+
+  <data name="Login_Eyebrow" xml:space="preserve">
+    <value>Farm Platform</value>
+  </data>
+  <data name="Login_Headline" xml:space="preserve">
+    <value>Everything the farm runs on, in one place.</value>
+  </data>
+  <data name="Login_Copy" xml:space="preserve">
+    <value>Irrigation today. Assets, crops, tasks and finance as they come online — same shell, same login.</value>
+  </data>
+  <data name="Login_SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="Login_EmailOrUsername" xml:space="preserve">
+    <value>Email or username</value>
+  </data>
+  <data name="Login_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Login_Helper" xml:space="preserve">
+    <value>Signed in as &lt;strong&gt;Worker&lt;/strong&gt; → lands on Today view. Owner/manager → Farm overview.</value>
+  </data>
+
+  <data name="Dashboard_Eyebrow" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Dashboard_Title" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Dashboard_OwnerView" xml:space="preserve">
+    <value>Owner / Manager view</value>
+  </data>
+  <data name="Dashboard_WorkerView" xml:space="preserve">
+    <value>Worker view</value>
+  </data>
+  <data name="Dashboard_Subtitle" xml:space="preserve">
+    <value>Same login, different landing screen based on role.</value>
+  </data>
+  <data name="Dashboard_RecentActivity" xml:space="preserve">
+    <value>Recent activity</value>
+  </data>
+  <data name="Dashboard_WhatNeedsDoing" xml:space="preserve">
+    <value>What needs doing today</value>
+  </data>
+  <data name="Dashboard_Run" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="Dashboard_Stat_ActiveZones" xml:space="preserve">
+    <value>Active zones</value>
+  </data>
+  <data name="Dashboard_Stat_DueToday" xml:space="preserve">
+    <value>Due today</value>
+  </data>
+  <data name="Dashboard_Stat_Overdue" xml:space="preserve">
+    <value>Overdue</value>
+  </data>
+  <data name="Dashboard_Stat_RunsLoggedThisWeek" xml:space="preserve">
+    <value>Runs logged this week</value>
+  </data>
+  <data name="Dashboard_Activity_1" xml:space="preserve">
+    <value>North Orchard B — irrigation run logged (34 min)</value>
+  </data>
+  <data name="Dashboard_Activity_2" xml:space="preserve">
+    <value>West Pasture flagged overdue</value>
+  </data>
+  <data name="Dashboard_Activity_3" xml:space="preserve">
+    <value>New zone added: East Orchard A</value>
+  </data>
+  <data name="Dashboard_Activity_4" xml:space="preserve">
+    <value>South Field 3 — irrigation run logged (41 min)</value>
+  </data>
+  <data name="Dashboard_Time_Yesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="Dashboard_Time_2DaysAgo" xml:space="preserve">
+    <value>2 days ago</value>
+  </data>
+  <data name="Dashboard_Task_WestPasture_Name" xml:space="preserve">
+    <value>West Pasture</value>
+  </data>
+  <data name="Dashboard_Task_WestPasture_Crop" xml:space="preserve">
+    <value>Pasture grass</value>
+  </data>
+  <data name="Dashboard_Task_WestPasture_Note" xml:space="preserve">
+    <value>Overdue 5 days</value>
+  </data>
+  <data name="Dashboard_Task_SouthField3_Name" xml:space="preserve">
+    <value>South Field 3</value>
+  </data>
+  <data name="Dashboard_Task_SouthField4_Name" xml:space="preserve">
+    <value>South Field 4</value>
+  </data>
+  <data name="Dashboard_Task_Alfalfa" xml:space="preserve">
+    <value>Alfalfa</value>
+  </data>
+  <data name="Dashboard_Task_DueToday" xml:space="preserve">
+    <value>Due today</value>
+  </data>
+</root>
