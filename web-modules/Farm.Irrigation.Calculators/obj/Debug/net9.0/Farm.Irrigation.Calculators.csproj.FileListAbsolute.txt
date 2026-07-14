@@ -1,0 +1,12 @@
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\bin\Debug\net9.0\Farm.Irrigation.Calculators.deps.json
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\bin\Debug\net9.0\Farm.Irrigation.Calculators.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\bin\Debug\net9.0\Farm.Irrigation.Calculators.pdb
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.AssemblyInfoInputs.cache
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.AssemblyInfo.cs
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.csproj.CoreCompileInputs.cache
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.sourcelink.json
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\refint\Farm.Irrigation.Calculators.dll
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\Farm.Irrigation.Calculators.pdb
+C:\Users\bbdnet2040\Documents\Personal\Apps\FarmManager\web-modules\Farm.Irrigation.Calculators\obj\Debug\net9.0\ref\Farm.Irrigation.Calculators.dll

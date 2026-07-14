@@ -1,4 +1,11 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Farm.Web.Core.Shell.AppShellLayout).Assembly }">
+@using System.Reflection
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.WebAssembly.Services
+@inject LazyAssemblyLoader AssemblyLoader
+
+<Router AppAssembly="@typeof(App).Assembly"
+        AdditionalAssemblies="@_routeAssemblies"
+        OnNavigateAsync="@OnNavigateAsync">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(Farm.Web.Core.Shell.AppShellLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -10,3 +17,25 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    // Farm.Web.Core is referenced eagerly (shell, auth, dashboard); feature
+    // modules are appended here once their assemblies lazy-load.
+    private readonly List<Assembly> _routeAssemblies = new()
+    {
+        typeof(Farm.Web.Core.Shell.AppShellLayout).Assembly,
+    };
+
+    private bool _irrigationLoaded;
+
+    private async Task OnNavigateAsync(NavigationContext context)
+    {
+        if (!_irrigationLoaded && context.Path.StartsWith("irrigation", StringComparison.OrdinalIgnoreCase))
+        {
+            var loaded = await AssemblyLoader.LoadAssembliesAsync(
+                new[] { "Farm.Web.Irrigation.wasm", "Farm.Irrigation.Calculators.wasm" });
+            _routeAssemblies.AddRange(loaded);
+            _irrigationLoaded = true;
+        }
+    }
+}

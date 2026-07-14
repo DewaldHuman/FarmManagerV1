@@ -1,0 +1,796 @@
+@page "/irrigation/run-calculator"
+@layout AppShellLayout
+@using System.Globalization
+
+<div class="app-shell__eyebrow">Irrigation</div>
+<h1 class="app-shell__title calc-title">Run calculation</h1>
+
+@if (_selected is null)
+{
+    <div class="calc-picker-intro">Choose a calculator</div>
+
+    @foreach (var category in _categories)
+    {
+        <div class="calc-category">@category.Name</div>
+        <div class="calc-card-grid">
+            @foreach (var calc in category.Calculators)
+            {
+                var current = calc;
+                <div class="calc-card" @onclick="() => Select(current)">
+                    <div class="calc-card__icon">@current.Icon</div>
+                    <div class="calc-card__title">@current.Title</div>
+                    <div class="calc-card__desc">@current.Desc</div>
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <button class="calc-back-btn" @onclick="BackToPicker">← Choose a different calculator</button>
+
+    <div class="calc-layout">
+        <div>
+            <div class="calc-form__title">@_selected.Title</div>
+
+            @foreach (var field in _selected.Fields)
+            {
+                @if (field is NumberField num)
+                {
+                    <label class="form-label">@num.Label</label>
+                    <input class="form-input" inputmode="decimal"
+                           value="@_inputs[num.Key]"
+                           @onchange="e => _inputs[num.Key] = e.Value?.ToString() ?? string.Empty" />
+                }
+                else if (field is ChoiceField choice)
+                {
+                    <label class="form-label">@choice.Label</label>
+                    @if (choice.Options.Count <= 3)
+                    {
+                        <div class="calc-segmented">
+                            @for (var i = 0; i < choice.Options.Count; i++)
+                            {
+                                var idx = i;
+                                <button type="button"
+                                        class="calc-segmented__option @(_choiceIdx[choice.Key] == idx ? "calc-segmented__option--active" : "")"
+                                        @onclick="() => _choiceIdx[choice.Key] = idx">
+                                    @choice.Options[idx].Label
+                                </button>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <select class="calc-select"
+                                @onchange="e => SetChoice(choice.Key, e)">
+                            @for (var i = 0; i < choice.Options.Count; i++)
+                            {
+                                <option value="@i" selected="@(_choiceIdx[choice.Key] == i)">@choice.Options[i].Label</option>
+                            }
+                        </select>
+                    }
+                }
+            }
+
+            <button class="calc-run-btn" @onclick="Run">Run Calculation</button>
+        </div>
+
+        <div>
+            <div class="calc-result-panel">
+                <div class="calc-result-label">Result</div>
+
+                @if (_error is not null)
+                {
+                    <div class="calc-result-error">@_error</div>
+                }
+                else if (_result is not null)
+                {
+                    <div class="calc-result-card">
+                        <div class="calc-result-card__label">@_result.Label</div>
+                        <div class="calc-result-card__value">@_result.Headline</div>
+                        @foreach (var detail in _result.Details)
+                        {
+                            <div class="calc-result-card__detail">@detail</div>
+                        }
+                    </div>
+                    @if (_result.CanLog)
+                    {
+                        <button class="calc-log-btn" disabled title="Run logging arrives with the backend">Confirm &amp; Log Run</button>
+                    }
+                }
+                else
+                {
+                    <div class="calc-result-empty">Run the calculation to see the result.</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // ---- Descriptor model ------------------------------------------------
+
+    private abstract record Field(string Key, string Label);
+
+    /// <param name="AllowZero">Zero is a valid input (e.g. rainfall); negative never is.</param>
+    private sealed record NumberField(string Key, string Label, double Default, bool AllowZero = false) : Field(Key, Label);
+
+    private sealed record Choice(string Label, double Value);
+
+    private sealed record ChoiceField(string Key, string Label, IReadOnlyList<Choice> Options) : Field(Key, Label);
+
+    private sealed record CalcResult(string Label, string Headline, IReadOnlyList<string> Details, bool CanLog = false);
+
+    private sealed record Calculator(
+        string Id, string Icon, string Title, string Desc,
+        IReadOnlyList<Field> Fields,
+        Func<IReadOnlyDictionary<string, double>, CalcResult> Compute);
+
+    private sealed record Category(string Name, IReadOnlyList<Calculator> Calculators);
+
+    // ---- State -----------------------------------------------------------
+
+    private Calculator? _selected;
+    private CalcResult? _result;
+    private string? _error;
+    private readonly Dictionary<string, string> _inputs = new();
+    private readonly Dictionary<string, int> _choiceIdx = new();
+
+    private void Select(Calculator calc)
+    {
+        _selected = calc;
+        _result = null;
+        _error = null;
+        _inputs.Clear();
+        _choiceIdx.Clear();
+        foreach (var field in calc.Fields)
+        {
+            switch (field)
+            {
+                case NumberField n:
+                    _inputs[n.Key] = n.Default.ToString(CultureInfo.InvariantCulture);
+                    break;
+                case ChoiceField:
+                    _choiceIdx[field.Key] = 0;
+                    break;
+            }
+        }
+    }
+
+    private void SetChoice(string key, ChangeEventArgs e)
+    {
+        _choiceIdx[key] = int.TryParse(e.Value?.ToString(), out var idx) ? idx : 0;
+    }
+
+    private void BackToPicker()
+    {
+        _selected = null;
+        _result = null;
+        _error = null;
+    }
+
+    private void Run()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        _result = null;
+        _error = null;
+
+        var values = new Dictionary<string, double>();
+        foreach (var field in _selected.Fields)
+        {
+            switch (field)
+            {
+                case NumberField n:
+                {
+                    var raw = (_inputs.GetValueOrDefault(n.Key) ?? string.Empty).Trim().Replace(',', '.');
+                    if (!double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+                    {
+                        _error = $"Enter a valid number for “{n.Label}”.";
+                        return;
+                    }
+                    if (parsed < 0 || (parsed == 0 && !n.AllowZero))
+                    {
+                        _error = n.AllowZero
+                            ? $"“{n.Label}” can’t be negative."
+                            : $"“{n.Label}” must be greater than 0.";
+                        return;
+                    }
+                    values[n.Key] = parsed;
+                    break;
+                }
+                case ChoiceField c:
+                    values[c.Key] = c.Options[_choiceIdx[c.Key]].Value;
+                    break;
+            }
+        }
+
+        try
+        {
+            _result = _selected.Compute(values);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Couldn’t calculate — check the inputs. ({ex.Message})";
+        }
+    }
+
+    // ---- Formatting ------------------------------------------------------
+
+    private static string F0(double v) => v.ToString("#,##0", CultureInfo.InvariantCulture);
+    private static string F1(double v) => v.ToString("#,##0.#", CultureInfo.InvariantCulture);
+    private static string F2(double v) => v.ToString("#,##0.##", CultureInfo.InvariantCulture);
+
+    // ---- Calculator catalogue ---------------------------------------------
+
+    private static readonly IReadOnlyList<Choice> GrowthStages = new[]
+    {
+        new Choice("Establishment", CropCoefficients.Establishment),
+        new Choice("Mid-season", CropCoefficients.MidSeason),
+        new Choice("Late season", CropCoefficients.LateSeason),
+    };
+
+    private static readonly IReadOnlyList<Choice> SoilTypes = new[]
+    {
+        new Choice("Sand", SoilAvailableWater.Sand),
+        new Choice("Loamy sand", SoilAvailableWater.LoamySand),
+        new Choice("Sandy loam", SoilAvailableWater.SandyLoam),
+        new Choice("Loam", SoilAvailableWater.Loam),
+        new Choice("Clay loam", SoilAvailableWater.ClayLoam),
+        new Choice("Clay", SoilAvailableWater.Clay),
+    };
+
+    private static readonly IReadOnlyList<Choice> PipeMaterials = new[]
+    {
+        new Choice("uPVC (C = 150)", PipeRoughness.Upvc),
+        new Choice("HDPE / PE (C = 150)", PipeRoughness.Hdpe),
+        new Choice("Asbestos cement (C = 140)", PipeRoughness.AsbestosCement),
+        new Choice("New steel (C = 130)", PipeRoughness.NewSteel),
+        new Choice("Galvanized steel (C = 120)", PipeRoughness.GalvanizedSteel),
+        new Choice("Aluminium with couplers (C = 120)", PipeRoughness.AluminiumWithCouplers),
+        new Choice("Old steel (C = 100)", PipeRoughness.OldSteel),
+    };
+
+    private static readonly IReadOnlyList<Choice> SprinklerPatterns = new[]
+    {
+        new Choice("Rectangular", 0),
+        new Choice("Triangular", 1),
+    };
+
+    private static readonly IReadOnlyList<Choice> FieldShapes = new[]
+    {
+        new Choice("Rectangle", 0),
+        new Choice("Triangle", 1),
+        new Choice("Circle", 2),
+        new Choice("Trapezoid", 3),
+    };
+
+    private static readonly IReadOnlyList<Choice> LivestockTypes = new[]
+    {
+        new Choice("Beef cattle (45 L/day)", LivestockWaterRates.BeefCattle),
+        new Choice("Dairy cattle (90 L/day)", LivestockWaterRates.DairyCattle),
+        new Choice("Horses (45 L/day)", LivestockWaterRates.Horses),
+        new Choice("Pigs (15 L/day)", LivestockWaterRates.Pigs),
+        new Choice("Sheep (6 L/day)", LivestockWaterRates.Sheep),
+        new Choice("Goats (5 L/day)", LivestockWaterRates.Goats),
+        new Choice("Poultry (0.5 L/day per bird)", LivestockWaterRates.PoultryPerBird),
+        new Choice("Mixed / other (25 L/day)", LivestockWaterRates.MixedOther),
+    };
+
+    private static readonly IReadOnlyList<Choice> ClimateFactors = new[]
+    {
+        new Choice("Temperate, 15–25 °C (×1.0)", 1.0),
+        new Choice("Hot & dry, 25–35 °C (×1.25)", 1.25),
+        new Choice("Very hot, 35 °C+ (×1.5)", 1.5),
+        new Choice("Cold, below 10 °C (×0.85)", 0.85),
+    };
+
+    private static readonly IReadOnlyList<Choice> SeasonFactors = new[]
+    {
+        new Choice("Summer (×1.25)", 1.25),
+        new Choice("Spring (×1.0)", 1.0),
+        new Choice("Autumn (×0.85)", 0.85),
+        new Choice("Winter (×0.65)", 0.65),
+        new Choice("Tropical, year-round (×1.3)", 1.3),
+    };
+
+    private static readonly IReadOnlyList<Category> _categories = new[]
+    {
+        new Category("Run time & volume", new[]
+        {
+            new Calculator("et0-run-time", "💧", "ET₀ Run-Time",
+                "Reference evapotranspiration + crop coefficient → recommended run-time.",
+                new Field[]
+                {
+                    new ChoiceField("kc", "Crop growth stage", GrowthStages),
+                    new NumberField("et0", "Reference ET₀ (mm/day)", 5.2),
+                    new NumberField("days", "Days since last irrigation", 3),
+                    new NumberField("rain", "Rainfall since last run (mm)", 0, AllowZero: true),
+                    new NumberField("area", "Zone area (ha)", 2.4),
+                    new NumberField("flow", "System flow rate (L/min)", 600),
+                    new NumberField("eff", "System efficiency (%)", 85),
+                },
+                v =>
+                {
+                    var r = RunTimeCalculators.Et0RunTime(v["et0"], v["kc"], v["days"], v["rain"], v["area"], v["flow"], v["eff"]);
+                    return new CalcResult("Recommended run-time", $"{F0(r.RunTimeMinutes)} min",
+                        new[]
+                        {
+                            $"{F0(r.VolumeLitres)} L · net requirement {F1(r.NetRequirementMm)} mm",
+                            $"ETc {F2(r.CropWaterUseMmPerDay)} mm/day · gross {F1(r.GrossRequirementMm)} mm at {F0(v["eff"])}% efficiency",
+                        },
+                        CanLog: true);
+                }),
+
+            new Calculator("crop-water-need", "🌾", "Crop Water Need",
+                "Crop coefficient and ET₀ → agronomic water demand over a period (before system losses).",
+                new Field[]
+                {
+                    new ChoiceField("kc", "Crop growth stage", GrowthStages),
+                    new NumberField("et0", "Reference ET₀ (mm/day)", 5.2),
+                    new NumberField("area", "Area (ha)", 2.4),
+                    new NumberField("days", "Number of days", 7),
+                },
+                v =>
+                {
+                    var r = DemandCalculators.CropWaterNeed(v["et0"], v["kc"], v["area"], v["days"]);
+                    return new CalcResult("Crop water need", $"{F1(r.EtcMmPerDay)} mm/day",
+                        new[]
+                        {
+                            $"{F1(r.DailyVolumeCubicMetres)} m³/day over {F2(v["area"])} ha",
+                            $"{F0(r.TotalVolumeCubicMetres)} m³ across {F0(v["days"])} days",
+                        });
+                }),
+
+            new Calculator("manual-volume", "🧮", "Manual Volume",
+                "Enter a target volume and flow rate directly.",
+                new Field[]
+                {
+                    new NumberField("volume", "Target volume (L)", 1200),
+                    new NumberField("flow", "Flow rate (L/min)", 35),
+                },
+                v =>
+                {
+                    var minutes = RunTimeCalculators.ManualVolumeRunTimeMinutes(v["volume"], v["flow"]);
+                    return new CalcResult("Recommended run-time", $"{F0(minutes)} min",
+                        new[] { $"{F0(v["volume"])} L at {F1(v["flow"])} L/min" }, CanLog: true);
+                }),
+
+            new Calculator("drip-emitter", "🌿", "Drip Emitter Run-Time",
+                "Emitter count and flow rate → run-time for drip zones.",
+                new Field[]
+                {
+                    new NumberField("count", "Emitter count", 48),
+                    new NumberField("perEmitter", "Flow per emitter (L/hr)", 2),
+                    new NumberField("target", "Target volume (L)", 80),
+                },
+                v =>
+                {
+                    var r = RunTimeCalculators.DripEmitterRunTime(v["count"], v["perEmitter"], v["target"]);
+                    return new CalcResult("Recommended run-time", $"{F0(r.RunTimeMinutes)} min",
+                        new[]
+                        {
+                            $"{F0(v["count"])} emitters at {F1(v["perEmitter"])} L/hr",
+                            $"Total zone flow {F1(r.TotalFlowLitresPerHour)} L/hr",
+                        },
+                        CanLog: true);
+                }),
+
+            new Calculator("set-time", "⏱️", "Set Time for Depth",
+                "Target application depth and flow → how long to run the set.",
+                new Field[]
+                {
+                    new NumberField("depth", "Target depth (mm)", 25),
+                    new NumberField("area", "Set area (ha)", 1),
+                    new NumberField("flow", "Flow rate (m³/h)", 60),
+                },
+                v =>
+                {
+                    var r = RunTimeCalculators.SetTimeForDepth(v["depth"], v["area"], v["flow"]);
+                    return new CalcResult("Set time", $"{F1(r.Hours)} h",
+                        new[] { $"{F0(r.Minutes)} minutes to apply {F1(v["depth"])} mm over {F2(v["area"])} ha" }, CanLog: true);
+                }),
+
+            new Calculator("sprinkler-usage", "🌧️", "Sprinkler Water Usage",
+                "Heads, per-head flow and run time → water used per session.",
+                new Field[]
+                {
+                    new NumberField("heads", "Sprinkler heads running", 12),
+                    new NumberField("flow", "Flow per head (L/min)", 25),
+                    new NumberField("minutes", "Run time (minutes)", 45),
+                },
+                v =>
+                {
+                    var r = ApplicationCalculators.SprinklerSessionVolume(v["heads"], v["flow"], v["minutes"]);
+                    return new CalcResult("Water per session", $"{F0(r.VolumeLitres)} L",
+                        new[]
+                        {
+                            $"Total system flow {F0(r.TotalFlowLitresPerMinute)} L/min",
+                            $"{F2(r.VolumeLitres / 1000)} m³ per session",
+                        });
+                }),
+        }),
+
+        new Category("Application & scheduling", new[]
+        {
+            new Calculator("application-rate", "🚿", "Water Application Rate",
+                "System flow over a wetted area → mm per hour applied.",
+                new Field[]
+                {
+                    new NumberField("flow", "System flow rate (m³/h)", 60),
+                    new NumberField("area", "Wetted area (ha)", 1),
+                },
+                v => new CalcResult("Application rate",
+                    $"{F2(ApplicationCalculators.ApplicationRateMmPerHour(v["flow"], v["area"]))} mm/h",
+                    new[] { $"{F1(v["flow"])} m³/h over {F2(v["area"])} ha" })),
+
+            new Calculator("depth-applied", "📏", "Depth Applied",
+                "Flow and run duration → depth of water applied.",
+                new Field[]
+                {
+                    new NumberField("flow", "Flow rate (m³/h)", 60),
+                    new NumberField("hours", "Run time (hours)", 4),
+                    new NumberField("area", "Irrigated area (ha)", 1),
+                },
+                v => new CalcResult("Depth applied",
+                    $"{F1(ApplicationCalculators.DepthAppliedMm(v["flow"], v["hours"], v["area"]))} mm",
+                    new[] { $"{F0(v["flow"] * v["hours"])} m³ over {F2(v["area"])} ha" })),
+
+            new Calculator("drip-line-rate", "💦", "Drip Line Rate",
+                "Emitter flow and spacing grid → drip line application rate.",
+                new Field[]
+                {
+                    new NumberField("flow", "Emitter flow (L/hr)", 2),
+                    new NumberField("spacing", "Emitter spacing (m)", 0.3),
+                    new NumberField("lateral", "Lateral spacing (m)", 1.0),
+                },
+                v => new CalcResult("Application rate",
+                    $"{F2(ApplicationCalculators.DripLineRateMmPerHour(v["flow"], v["spacing"], v["lateral"]))} mm/h",
+                    new[] { $"{F1(v["flow"])} L/hr per {F2(v["spacing"] * v["lateral"])} m² wetted grid" })),
+
+            new Calculator("sprinkler-rate", "⛲", "Sprinkler Application Rate",
+                "Per-head flow and head spacing → sprinkler application rate.",
+                new Field[]
+                {
+                    new NumberField("flow", "Sprinkler flow (L/hr)", 1000),
+                    new NumberField("along", "Spacing along lateral (m)", 12),
+                    new NumberField("between", "Spacing between laterals (m)", 12),
+                },
+                v => new CalcResult("Application rate",
+                    $"{F2(ApplicationCalculators.SprinklerRateMmPerHour(v["flow"], v["along"], v["between"]))} mm/h",
+                    new[] { $"{F0(v["flow"])} L/hr per head on a {F1(v["along"])} × {F1(v["between"])} m grid" })),
+
+            new Calculator("sprinkler-density", "🔢", "Sprinkler Density",
+                "Head spacing and pattern → sprinkler heads per hectare.",
+                new Field[]
+                {
+                    new ChoiceField("pattern", "Spacing pattern", SprinklerPatterns),
+                    new NumberField("spacing", "Head spacing (m)", 12),
+                    new NumberField("row", "Row spacing (m) — rectangular pattern only", 12),
+                },
+                v =>
+                {
+                    var triangular = v["pattern"] == 1;
+                    var density = triangular
+                        ? ApplicationCalculators.SprinklerDensityTriangularPerHectare(v["spacing"])
+                        : ApplicationCalculators.SprinklerDensityRectangularPerHectare(v["spacing"], v["row"]);
+                    var areaPerHead = 10_000 / density;
+                    return new CalcResult("Head density", $"{F1(density)} /ha",
+                        new[]
+                        {
+                            $"{F1(areaPerHead)} m² covered per head",
+                            triangular
+                                ? $"Triangular: rows work out to {F2(v["spacing"] * 0.866)} m apart"
+                                : $"Rectangular {F1(v["spacing"])} × {F1(v["row"])} m grid",
+                        });
+                }),
+
+            new Calculator("catch-can", "🥫", "Catch-Can Test",
+                "Four can depths and run time → measured application rate.",
+                new Field[]
+                {
+                    new NumberField("c1", "Can 1 depth (mm)", 4, AllowZero: true),
+                    new NumberField("c2", "Can 2 depth (mm)", 5, AllowZero: true),
+                    new NumberField("c3", "Can 3 depth (mm)", 6, AllowZero: true),
+                    new NumberField("c4", "Can 4 depth (mm)", 5, AllowZero: true),
+                    new NumberField("minutes", "Sprinkler run time (minutes)", 30),
+                },
+                v =>
+                {
+                    var r = ApplicationCalculators.CatchCanRate(v["c1"], v["c2"], v["c3"], v["c4"], v["minutes"]);
+                    return new CalcResult("Measured rate", $"{F2(r.RateMmPerHour)} mm/h",
+                        new[] { $"Average catch depth {F2(r.AverageDepthMm)} mm over {F0(v["minutes"])} minutes" });
+                }),
+
+            new Calculator("irrigation-frequency", "📅", "Irrigation Frequency",
+                "Soil, root depth and crop use → max days between irrigations.",
+                new Field[]
+                {
+                    new ChoiceField("soil", "Soil type", SoilTypes),
+                    new NumberField("rootDepth", "Effective root depth (m)", 0.6),
+                    new NumberField("mad", "Allowable depletion (%)", 50),
+                    new NumberField("use", "Peak crop water use (mm/day)", 6),
+                },
+                v =>
+                {
+                    var r = SchedulingCalculators.MaxIrrigationInterval(v["soil"], v["rootDepth"], v["mad"], v["use"]);
+                    return new CalcResult("Max interval", $"{F1(r.IntervalDays)} days",
+                        new[]
+                        {
+                            $"Readily available water {F1(r.ReadilyAvailableWaterMm)} mm",
+                            $"Soil holds {F0(v["soil"])} mm/m over {F2(v["rootDepth"])} m of roots",
+                        });
+                }),
+        }),
+
+        new Category("Pipes & pumps", new[]
+        {
+            new Calculator("pipe-velocity", "🔩", "Pipe Velocity & Size",
+                "Flow and pipe bore → water velocity and minimum pipe size.",
+                new Field[]
+                {
+                    new NumberField("flow", "Flow rate (m³/h)", 60),
+                    new NumberField("id", "Pipe inside diameter (mm)", 100),
+                    new NumberField("target", "Target max velocity (m/s)", 1.5),
+                },
+                v =>
+                {
+                    var velocity = HydraulicsCalculators.VelocityMetresPerSecond(v["flow"], v["id"]);
+                    var minId = HydraulicsCalculators.MinimumDiameterMm(v["flow"], v["target"]);
+                    return new CalcResult("Velocity", $"{F2(velocity)} m/s",
+                        new[] { $"Minimum Ø {F1(minId)} mm to stay at or under {F2(v["target"])} m/s" });
+                }),
+
+            new Calculator("friction-loss", "📉", "Pipeline Friction Loss",
+                "Hazen-Williams pressure loss along a pipeline.",
+                new Field[]
+                {
+                    new NumberField("flow", "Flow rate (m³/h)", 60),
+                    new NumberField("id", "Pipe inside diameter (mm)", 100),
+                    new NumberField("length", "Pipe length (m)", 200),
+                    new ChoiceField("c", "Pipe material", PipeMaterials),
+                },
+                v =>
+                {
+                    var r = HydraulicsCalculators.HazenWilliamsFrictionLoss(v["flow"], v["id"], v["length"], v["c"]);
+                    return new CalcResult("Pressure loss", $"{F1(r.PressureLossKpa)} kPa",
+                        new[] { $"{F2(r.HeadLossMetres)} m head over {F0(v["length"])} m of pipe" });
+                }),
+
+            new Calculator("lateral-friction-loss", "🚰", "Lateral / Outlet Friction Loss",
+                "Friction loss in a lateral or manifold with evenly spaced outlets (Christiansen F × Hazen-Williams).",
+                new Field[]
+                {
+                    new NumberField("flow", "Flow entering the pipe (m³/h)", 60),
+                    new NumberField("id", "Pipe inside diameter (mm)", 100),
+                    new NumberField("length", "Pipe length (m)", 200),
+                    new NumberField("outlets", "Number of outlets", 20),
+                    new ChoiceField("c", "Pipe material", PipeMaterials),
+                },
+                v =>
+                {
+                    var outlets = Math.Max(1, (int)Math.Round(v["outlets"]));
+                    var r = HydraulicsCalculators.LateralFrictionLoss(v["flow"], v["id"], v["length"], v["c"], outlets);
+                    var f = HydraulicsCalculators.ChristiansenF(outlets);
+                    return new CalcResult("Pressure loss", $"{F1(r.PressureLossKpa)} kPa",
+                        new[]
+                        {
+                            $"{F2(r.HeadLossMetres)} m head over {F0(v["length"])} m with {outlets} outlets",
+                            $"Christiansen reduction F = {F2(f)}",
+                        });
+                }),
+
+            new Calculator("total-head", "⛰️", "Total Dynamic Head",
+                "Static lift, friction and outlet pressure → total dynamic head.",
+                new Field[]
+                {
+                    new NumberField("lift", "Static lift (m)", 20, AllowZero: true),
+                    new NumberField("friction", "Friction losses (m)", 7.5, AllowZero: true),
+                    new NumberField("pressure", "Required outlet pressure (kPa)", 300, AllowZero: true),
+                },
+                v => new CalcResult("Total dynamic head",
+                    $"{F1(HydraulicsCalculators.TotalDynamicHeadMetres(v["lift"], v["friction"], v["pressure"]))} m",
+                    new[] { $"{F0(v["pressure"])} kPa outlet pressure = {F1(v["pressure"] / 9.81)} m head" })),
+
+            new Calculator("pump-power", "⚡", "Pump Sizing",
+                "Flow, head and efficiencies → shaft power and the standard motor to buy.",
+                new Field[]
+                {
+                    new NumberField("flow", "Flow rate (m³/h)", 60),
+                    new NumberField("head", "Total dynamic head (m)", 45),
+                    new NumberField("eff", "Pump efficiency (%)", 65),
+                    new NumberField("motorEff", "Motor efficiency (%)", 90),
+                    new NumberField("sf", "Safety factor", 1.15),
+                },
+                v =>
+                {
+                    var r = HydraulicsCalculators.PumpSizing(v["flow"], v["head"], v["eff"], v["motorEff"], v["sf"]);
+                    return new CalcResult("Recommended motor", $"{F2(r.RecommendedMotorKw)} kW",
+                        new[]
+                        {
+                            $"Shaft power {F1(r.ShaftKw)} kW · hydraulic {F1(r.HydraulicKw)} kW",
+                            $"Electrical input {F1(r.InputKw)} kW × {F2(v["sf"])} safety factor",
+                        });
+                }),
+        }),
+
+        new Category("Land, storage & supply", new[]
+        {
+            new Calculator("field-area", "📐", "Field Area",
+                "Field dimensions by shape → area in m² and hectares.",
+                new Field[]
+                {
+                    new ChoiceField("shape", "Field shape", FieldShapes),
+                    new NumberField("a", "Length / base / radius (m)", 100),
+                    new NumberField("b", "Width / height (m) — not used for circle", 60),
+                    new NumberField("c", "Second parallel side (m) — trapezoid only", 60),
+                    new NumberField("portion", "Portion of circle (0–1) — circle only", 1),
+                },
+                v =>
+                {
+                    var areaM2 = (int)v["shape"] switch
+                    {
+                        0 => FieldAreaCalculators.RectangleSquareMetres(v["a"], v["b"]),
+                        1 => FieldAreaCalculators.TriangleSquareMetres(v["a"], v["b"]),
+                        2 => FieldAreaCalculators.CircleSquareMetres(v["a"], v["portion"]),
+                        _ => FieldAreaCalculators.TrapezoidSquareMetres(v["a"], v["c"], v["b"]),
+                    };
+                    return new CalcResult("Field area", $"{F2(areaM2 / 10_000)} ha",
+                        new[] { $"{F0(areaM2)} m²" });
+                }),
+
+            new Calculator("irrigatable-area", "🗺️", "Irrigatable Area",
+                "Supply flow and peak crop need → hectares the source can carry.",
+                new Field[]
+                {
+                    new NumberField("flow", "Supply flow rate (m³/h)", 60),
+                    new NumberField("hours", "Operating hours per day", 10),
+                    new NumberField("use", "Peak crop water use (mm/day)", 6),
+                    new NumberField("eff", "System efficiency (%)", 85),
+                },
+                v => new CalcResult("Irrigatable area",
+                    $"{F2(SupplyCalculators.IrrigatableAreaHectares(v["flow"], v["hours"], v["use"], v["eff"]))} ha",
+                    new[] { $"{F0(v["flow"] * v["hours"])} m³ available per day" })),
+
+            new Calculator("system-capacity", "🏗️", "Required System Capacity",
+                "Area, application depth and irrigation interval → flow rate the system needs.",
+                new Field[]
+                {
+                    new NumberField("area", "Irrigated area (ha)", 8),
+                    new NumberField("depth", "Net application depth (mm)", 30),
+                    new NumberField("interval", "Irrigation interval (days)", 7),
+                    new NumberField("hours", "Operating hours per day", 12),
+                    new NumberField("eff", "Irrigation efficiency (%)", 85),
+                },
+                v =>
+                {
+                    var m3h = SupplyCalculators.RequiredSystemCapacityCubicMetresPerHour(
+                        v["area"], v["depth"], v["interval"], v["hours"], v["eff"]);
+                    return new CalcResult("Required capacity", $"{F1(m3h)} m³/h",
+                        new[]
+                        {
+                            $"{F1(m3h * 1000 / 3600)} L/s · {F0(m3h * 1000 / 60)} L/min",
+                            $"{F0(v["area"] * v["depth"] * 10 / (v["eff"] / 100))} m³ gross per irrigation",
+                        });
+                }),
+
+            new Calculator("storage-size", "🛢️", "Storage / Tank Size",
+                "Daily demand and reserve days → tank or dam capacity.",
+                new Field[]
+                {
+                    new NumberField("demand", "Daily demand (m³)", 30),
+                    new NumberField("days", "Reserve days", 3),
+                    new NumberField("margin", "Safety margin (%)", 10, AllowZero: true),
+                },
+                v => new CalcResult("Storage required",
+                    $"{F0(SupplyCalculators.StorageRequiredKilolitres(v["demand"], v["days"], v["margin"]))} kL",
+                    new[] { $"{F0(v["demand"])} m³/day buffered for {F1(v["days"])} days + {F0(v["margin"])}% margin" })),
+
+            new Calculator("field-tank", "🏞️", "Field Irrigation Tank Size",
+                "Crop water need, area and refill interval → field tank capacity.",
+                new Field[]
+                {
+                    new NumberField("etc", "Crop water need, ETc (mm/day)", 6),
+                    new NumberField("area", "Irrigated area (ha)", 2),
+                    new NumberField("eff", "Irrigation efficiency (%)", 85),
+                    new NumberField("refill", "Refill interval (days)", 2),
+                    new NumberField("margin", "Safety margin (%)", 10, AllowZero: true),
+                },
+                v =>
+                {
+                    var r = SupplyCalculators.FieldIrrigationTankSize(v["etc"], v["area"], v["eff"], v["refill"], v["margin"]);
+                    return new CalcResult("Tank capacity", $"{F0(r.TankKilolitres)} kL",
+                        new[]
+                        {
+                            $"Daily demand {F1(r.DailyCubicMetres)} m³ at {F2(r.GrossMmPerDay)} mm/day gross",
+                            $"Buffered for {F1(v["refill"])} days + {F0(v["margin"])}% margin",
+                        });
+                }),
+
+            new Calculator("drip-tank", "🪣", "Drip Tank Size",
+                "Plants, emitters and daily run hours → drip holding-tank size.",
+                new Field[]
+                {
+                    new NumberField("plants", "Number of plants", 200),
+                    new NumberField("emitters", "Emitters per plant", 2),
+                    new NumberField("flow", "Flow per emitter (L/hr)", 2),
+                    new NumberField("hours", "Watering hours per day", 6),
+                    new NumberField("days", "Buffer days", 3),
+                },
+                v =>
+                {
+                    var r = SupplyCalculators.DripTankSize(v["plants"], v["emitters"], v["flow"], v["hours"], v["days"]);
+                    return new CalcResult("Tank size", $"{F0(r.TankLitres)} L",
+                        new[]
+                        {
+                            $"{F0(r.TotalEmitters)} emitters using {F0(r.DailyDemandLitres)} L/day",
+                            $"{F1(v["days"])} day buffer",
+                        });
+                }),
+
+            new Calculator("greenhouse-use", "🏡", "Greenhouse Water Use",
+                "Floor area, crop rate and season → daily greenhouse demand.",
+                new Field[]
+                {
+                    new NumberField("area", "Growing area (m²)", 300),
+                    new NumberField("rate", "Crop water rate (L/m²/day)", 4.5),
+                    new ChoiceField("season", "Season", SeasonFactors),
+                    new NumberField("eff", "Irrigation efficiency (%)", 95),
+                },
+                v =>
+                {
+                    var daily = SupplyCalculators.GreenhouseDailyLitres(v["area"], v["rate"], v["season"], v["eff"]);
+                    return new CalcResult("Daily water need", $"{F0(daily)} L/day",
+                        new[]
+                        {
+                            $"{F0(daily * 7)} L per week",
+                            $"Rate ×{F2(v["season"])} season factor at {F0(v["eff"])}% efficiency",
+                        });
+                }),
+
+            new Calculator("farm-water-storage", "🚜", "Farm Water Storage",
+                "Combined livestock + irrigation demand → whole-farm storage capacity.",
+                new Field[]
+                {
+                    new ChoiceField("rate", "Livestock type", LivestockTypes),
+                    new NumberField("head", "Head count (0 if crop-only)", 100, AllowZero: true),
+                    new NumberField("area", "Irrigated area (ha, 0 if livestock-only)", 5, AllowZero: true),
+                    new NumberField("use", "Crop water use (mm/day)", 4, AllowZero: true),
+                    new NumberField("days", "Reserve days", 3),
+                },
+                v =>
+                {
+                    var r = DemandCalculators.FarmWaterStorage(v["head"], v["rate"], v["area"], v["use"], v["days"]);
+                    return new CalcResult("Storage required", $"{F1(r.TankLitres / 1000)} kL",
+                        new[]
+                        {
+                            $"{F0(r.TotalDailyLitres)} L/day total ({F0(r.LivestockDailyLitres)} L livestock + {F0(r.IrrigationDailyLitres)} L irrigation)",
+                            $"Buffered for {F1(v["days"])} days = {F0(r.TankLitres)} L",
+                        });
+                }),
+
+            new Calculator("livestock-water", "🐄", "Livestock Water",
+                "Head count, animal type and climate → daily drinking water and tank size.",
+                new Field[]
+                {
+                    new ChoiceField("rate", "Animal type", LivestockTypes),
+                    new NumberField("head", "Head count", 100),
+                    new ChoiceField("climate", "Climate", ClimateFactors),
+                    new NumberField("days", "Buffer days", 5),
+                },
+                v =>
+                {
+                    var r = SupplyCalculators.LivestockWater(v["head"], v["rate"], v["climate"], v["days"]);
+                    return new CalcResult("Daily water need", $"{F0(r.DailyLitres)} L/day",
+                        new[]
+                        {
+                            $"Tank for {F1(v["days"])} days: {F0(r.TankLitres)} L ({F1(r.TankLitres / 1000)} kL)",
+                            $"{F0(v["head"])} head × {F1(v["rate"])} L × {F2(v["climate"])} climate factor",
+                        });
+                }),
+        }),
+    };
+}

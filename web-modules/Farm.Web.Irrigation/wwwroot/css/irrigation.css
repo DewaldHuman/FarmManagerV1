@@ -1,0 +1,240 @@
+/* ---- Run Calculation: page ---- */
+
+.calc-title {
+  margin-bottom: 32px;
+}
+
+.calc-layout .form-input {
+  margin-bottom: 24px;
+}
+
+/* ---- Run Calculation: picker ---- */
+
+.calc-picker-intro {
+  font-size: 17px;
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+}
+
+.calc-category {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 32px 0 16px;
+}
+
+.calc-category:first-of-type {
+  margin-top: 0;
+}
+
+.calc-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1000px;
+}
+
+.calc-card {
+  padding: 32px 24px;
+  border-radius: 16px;
+  background: #f7f5ee;
+  border: 2px solid var(--color-border-light);
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-sans);
+}
+
+.calc-card:hover {
+  border-color: var(--color-primary);
+}
+
+.calc-card__icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+}
+
+.calc-card__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: 8px;
+}
+
+.calc-card__desc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* ---- Run Calculation: selected calculator ---- */
+
+.calc-back-btn {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #fff;
+  color: #312e22;
+  border: 2px solid var(--color-border-medium);
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  font-family: var(--font-sans);
+}
+
+.calc-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 40px;
+}
+
+.calc-form__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: 24px;
+}
+
+.calc-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.calc-segmented__option {
+  padding: 18px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: #fff;
+  color: #312e22;
+  border: 2px solid var(--color-border-medium);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.calc-segmented__option--active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.calc-select {
+  width: 100%;
+  padding: 18px;
+  font-size: 17px;
+  border: 2px solid var(--color-border-medium);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  color: var(--color-ink);
+  background: #fff;
+  font-family: var(--font-sans);
+}
+
+.calc-run-btn {
+  width: 100%;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.calc-run-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+/* ---- Result panel ---- */
+
+.calc-result-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.calc-result-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.calc-result-empty {
+  background: #f4f2ea;
+  border: 2px dashed var(--color-border-medium);
+  border-radius: 16px;
+  padding: 28px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.calc-result-error {
+  background: var(--status-overdue-bg);
+  border: 2px solid var(--status-overdue-border);
+  border-radius: 16px;
+  padding: 28px;
+  color: var(--status-overdue-text);
+  font-size: 15px;
+}
+
+.calc-result-card {
+  background: var(--result-bg);
+  border: 2px solid var(--result-border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 16px;
+}
+
+.calc-result-card__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--result-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.calc-result-card__value {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--result-value);
+  line-height: 1;
+}
+
+.calc-result-card__value small {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.calc-result-card__detail {
+  font-size: 15px;
+  color: #325033;
+  margin-top: 8px;
+}
+
+.calc-log-btn {
+  width: 100%;
+  padding: 18px;
+  font-size: 17px;
+  font-weight: 600;
+  background: #392a1e;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.calc-log-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

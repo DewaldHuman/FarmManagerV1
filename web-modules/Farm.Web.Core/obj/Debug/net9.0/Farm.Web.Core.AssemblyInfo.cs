@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Farm.Web.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+843e0790fef3dcb10881bc11b6d492c1b29582d4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5591beb48c2dd2af905889445f19a74b9a47cc44")]
 [assembly: System.Reflection.AssemblyProductAttribute("Farm.Web.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Farm.Web.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -11,8 +11,16 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.17" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- Feature modules are lazy-loaded: their assemblies only download when a
+       matching route is hit (see OnNavigateAsync in App.razor). -->
+  <ItemGroup>
+    <BlazorWebAssemblyLazyLoad Include="Farm.Web.Irrigation.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="Farm.Irrigation.Calculators.wasm" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\web-modules\Farm.Web.Core\Farm.Web.Core.csproj" />
+    <ProjectReference Include="..\..\web-modules\Farm.Web.Irrigation\Farm.Web.Irrigation.csproj" />
   </ItemGroup>
 
 </Project>

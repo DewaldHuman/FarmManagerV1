@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "Farm.Web.Host",
   "resources": {
-    "hash": "sha256-PyxZEkIcKF7ZNZURbNJQjjBgj8q0oNXZ9ViGI2iCopA=",
+    "hash": "sha256-u9dZUVIrvoAjBfpjfkcpisjcHg4cU7NuBK/rjg6FqXY=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Authorization.pfbiju6amj.wasm": "Microsoft.AspNetCore.Authorization.wasm",
       "Microsoft.AspNetCore.Components.810mhbyxc5.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -201,10 +201,14 @@
       "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
       "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
       "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "Farm.Web.Core.2mv8zg4hkn.wasm": "Farm.Web.Core.wasm",
-      "Farm.Web.Core.nrmnzavewz.pdb": "Farm.Web.Core.pdb",
-      "Farm.Web.Host.i59zjjzzbb.wasm": "Farm.Web.Host.wasm",
-      "Farm.Web.Host.8t85nonlkz.pdb": "Farm.Web.Host.pdb"
+      "Farm.Irrigation.Calculators.s8mexx3zc6.wasm": "Farm.Irrigation.Calculators.wasm",
+      "Farm.Web.Core.z5qi8cuurq.wasm": "Farm.Web.Core.wasm",
+      "Farm.Web.Irrigation.n5gokypqij.wasm": "Farm.Web.Irrigation.wasm",
+      "Farm.Web.Core.zzwl52rl1f.pdb": "Farm.Web.Core.pdb",
+      "Farm.Web.Irrigation.niyo9hmx3s.pdb": "Farm.Web.Irrigation.pdb",
+      "Farm.Irrigation.Calculators.fkl441k7gn.pdb": "Farm.Irrigation.Calculators.pdb",
+      "Farm.Web.Host.7t7s0opzzw.wasm": "Farm.Web.Host.wasm",
+      "Farm.Web.Host.0k3gygm5vn.pdb": "Farm.Web.Host.pdb"
     },
     "jsModuleNative": {
       "dotnet.native.qc8g39g30v.js": "sha256-SvVveFrqwSE/8qjn/DA3aVnuMXhmK4Ln+euLxQu8azU="
@@ -414,12 +418,18 @@
       "WindowsBase.5kidsc9cwj.wasm": "sha256-NXuFeS6KFuUEtK1L1ceaBLGv312S++f1mR9Kto+Hy18=",
       "mscorlib.xijg4wlfka.wasm": "sha256-2dqEBrWjuT5attumE5+LUeFO1cctfy00HBENhAlT9BY=",
       "netstandard.kp5ley9tiy.wasm": "sha256-KHbuelfx0rNF1OUK5LTGk1sytSnmzL/Ew2Dy2d+dZ8E=",
-      "Farm.Web.Core.2mv8zg4hkn.wasm": "sha256-9uo/6zr55bis5Sa3SOnaOrcbaSca6IVPwMd7MaRikAc=",
-      "Farm.Web.Host.i59zjjzzbb.wasm": "sha256-6tf8ze8fcIfGw+EHQu2XuKeS4Z/XdVRBtHUvwyPPlsc="
+      "Farm.Web.Core.z5qi8cuurq.wasm": "sha256-CZOzUsCYPyni5WuxF14GdT7ybUUiUGolECrJ/RjCTuY=",
+      "Farm.Web.Host.7t7s0opzzw.wasm": "sha256-dTluDy91YR70RcvJgfBbul5eJr2uV8aU+hztBz0Kyeg="
     },
     "pdb": {
-      "Farm.Web.Core.nrmnzavewz.pdb": "sha256-/VGtxyMPLzPV40jeNEAgY0LR+e+CFBhXWfsjSaZG4wA=",
-      "Farm.Web.Host.8t85nonlkz.pdb": "sha256-3ELmFin2HRgMiK2l9bi0CmMd7RmOnNVlrmXrxLJaofA="
+      "Farm.Web.Core.zzwl52rl1f.pdb": "sha256-T/cT/0jn1lBiLdDVW/p8rXD45Ec9yUj8dr/5p1TNOVA=",
+      "Farm.Web.Host.0k3gygm5vn.pdb": "sha256-ALhK2bZngbELBRKAvdBnZ0+5ndH0IZexC+q4S5mZlkA="
+    },
+    "lazyAssembly": {
+      "Farm.Irrigation.Calculators.s8mexx3zc6.wasm": "sha256-HD0bk/ga2eJBAbrKchMYGxyMUKlhXJkjAp+jGPx2B3c=",
+      "Farm.Web.Irrigation.n5gokypqij.wasm": "sha256-y9OUHeTqDFV8wkCbdrsqhjKcNmSonilWQfkBgoBS5nE=",
+      "Farm.Web.Irrigation.niyo9hmx3s.pdb": "sha256-v/GBigzbSIl+8S6D3e6aMD9udV7V0f5SvGQkK4oGjo8=",
+      "Farm.Irrigation.Calculators.fkl441k7gn.pdb": "sha256-L24Bg33ZhV9xqTbla/D9MgREAZPRuJOWxBWAYB/Q7kQ="
     }
   },
   "cacheBootResources": true,
