@@ -1,0 +1,73 @@
+@page "/irrigation/zones"
+@layout AppShellLayout
+@attribute [Authorize]
+@inject IFarmService FarmService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<div class="page-header">
+    <div>
+        <div class="app-shell__eyebrow">@Localizer["ZoneList_Eyebrow"]</div>
+        <h1 class="app-shell__title">@Localizer["ZoneList_Title"]</h1>
+    </div>
+    <button class="btn btn-secondary" @onclick="GoToFarmStructure">@Localizer["ZoneList_ManageFieldsZones"]</button>
+</div>
+
+@if (_loading)
+{
+    <p>@Localizer["Common_Loading"]</p>
+}
+else if (_zones.Count == 0)
+{
+    <p class="page-subtitle">@Localizer["ZoneList_Empty"]</p>
+}
+else
+{
+    <div class="zone-grid">
+        @foreach (var zone in _zones)
+        {
+            <div class="zone-card" @onclick="() => GoToRunCalculator(zone.Id)">
+                <div class="zone-card__header">
+                    <div>
+                        <div class="zone-card__name">@zone.Name</div>
+                        <div class="zone-card__field">@zone.FieldName</div>
+                    </div>
+                    <div class="pill @StatusPillClass(zone.Status)">@StatusLabel(zone.Status)</div>
+                </div>
+                <div class="zone-card__meta">
+                    <span>@zone.Crop</span>
+                    <span>@zone.AreaHa.ToString("0.##") @Localizer["Common_Hectares"]</span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ZoneDto> _zones = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _zones = await FarmService.ListZonesAsync();
+        _loading = false;
+    }
+
+    private void GoToFarmStructure() => Nav.NavigateTo("/farm/fields");
+
+    private void GoToRunCalculator(Guid zoneId) => Nav.NavigateTo($"/irrigation/run-calculator?zone={zoneId}");
+
+    private string StatusPillClass(string status) => status switch
+    {
+        "due" => "pill-due",
+        "overdue" => "pill-overdue",
+        _ => "pill-ok",
+    };
+
+    private string StatusLabel(string status) => status switch
+    {
+        "due" => Localizer["ZoneList_Status_Due"],
+        "overdue" => Localizer["ZoneList_Status_Overdue"],
+        _ => Localizer["ZoneList_Status_OnSchedule"],
+    };
+}

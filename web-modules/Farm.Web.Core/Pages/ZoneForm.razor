@@ -1,0 +1,132 @@
+@page "/farm/zones/new"
+@page "/farm/zones/{Id:guid}/edit"
+@layout AppShellLayout
+@attribute [Authorize]
+@inject IFarmService FarmService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<div class="page-header">
+    <h1 class="app-shell__title">@(IsEdit ? Localizer["ZoneForm_EditTitle"] : Localizer["ZoneForm_AddTitle"])</h1>
+</div>
+
+<div class="card" style="padding: 24px; max-width: 560px;">
+    <label class="form-label" for="zone-name">@Localizer["ZoneForm_Name"]</label>
+    <input id="zone-name" class="form-input" @bind="Name" @bind:event="oninput" />
+
+    <label class="form-label" for="zone-field">@Localizer["ZoneForm_Field"]</label>
+    <select id="zone-field" class="form-input" @bind="SelectedFieldId">
+        @foreach (var field in _fields)
+        {
+            <option value="@field.Id">@field.Name</option>
+        }
+    </select>
+
+    <label class="form-label" for="zone-area">@Localizer["ZoneForm_AreaHa"]</label>
+    <input id="zone-area" type="number" step="0.01" class="form-input" @bind="AreaHa" @bind:event="oninput" />
+
+    <label class="form-label" for="zone-crop">@Localizer["ZoneForm_Crop"]</label>
+    <input id="zone-crop" class="form-input" @bind="Crop" @bind:event="oninput" />
+
+    <label class="form-label" for="zone-irrigation">@Localizer["ZoneForm_IrrigationSystemType"]</label>
+    <select id="zone-irrigation" class="form-input" @bind="IrrigationSystemType">
+        <option value="drip">@Localizer["ZoneForm_Irrigation_Drip"]</option>
+        <option value="sprinkler">@Localizer["ZoneForm_Irrigation_Sprinkler"]</option>
+        <option value="flood">@Localizer["ZoneForm_Irrigation_Flood"]</option>
+        <option value="none">@Localizer["ZoneForm_Irrigation_None"]</option>
+    </select>
+
+    @if (_showError)
+    {
+        <div class="form-error">@Localizer["ZoneForm_Error"]</div>
+    }
+
+    <button class="btn btn-primary" @onclick="Save" disabled="@_saving">@Localizer["ZoneForm_Save"]</button>
+    @if (IsEdit)
+    {
+        <button class="btn btn-secondary" @onclick="Archive" disabled="@_saving">@Localizer["Common_Archive"]</button>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery] public Guid? FieldId { get; set; }
+
+    private bool IsEdit => Id.HasValue;
+    private List<FieldDto> _fields = new();
+    private Guid SelectedFieldId;
+    private string Name = string.Empty;
+    private double AreaHa;
+    private string? Crop;
+    private string IrrigationSystemType = "none";
+    private bool _saving;
+    private bool _showError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _fields = await FarmService.ListFieldsAsync();
+
+        if (IsEdit)
+        {
+            var zone = await FarmService.GetZoneAsync(Id!.Value);
+            if (zone is not null)
+            {
+                Name = zone.Name;
+                SelectedFieldId = zone.FieldId;
+                AreaHa = zone.AreaHa;
+                Crop = zone.Crop;
+                IrrigationSystemType = zone.IrrigationSystemType;
+            }
+        }
+        else if (FieldId.HasValue)
+        {
+            SelectedFieldId = FieldId.Value;
+        }
+        else if (_fields.Count > 0)
+        {
+            SelectedFieldId = _fields[0].Id;
+        }
+    }
+
+    private async Task Save()
+    {
+        _saving = true;
+        _showError = false;
+
+        ZoneDto? result = IsEdit
+            ? await FarmService.UpdateZoneAsync(Id!.Value, new ZoneUpdateRequest(SelectedFieldId, Name, AreaHa, Crop, IrrigationSystemType))
+            : await FarmService.CreateZoneAsync(new ZoneCreateRequest(SelectedFieldId, Name, AreaHa, Crop, IrrigationSystemType));
+
+        _saving = false;
+
+        if (result is not null)
+        {
+            Nav.NavigateTo("/farm/fields");
+        }
+        else
+        {
+            _showError = true;
+        }
+    }
+
+    private async Task Archive()
+    {
+        if (!IsEdit)
+        {
+            return;
+        }
+
+        _saving = true;
+        var success = await FarmService.ArchiveZoneAsync(Id!.Value);
+        _saving = false;
+
+        if (success)
+        {
+            Nav.NavigateTo("/farm/fields");
+        }
+        else
+        {
+            _showError = true;
+        }
+    }
+}

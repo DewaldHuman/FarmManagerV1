@@ -227,3 +227,97 @@
   align-items: center;
   gap: 20px;
 }
+
+/* ---- Zone List / Farm Structure ---- */
+
+.zone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.zone-card {
+  padding: 20px;
+  border-radius: var(--radius-card-sm);
+  border: 2px solid var(--color-border-medium);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.zone-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.zone-card__name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.zone-card__field {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.zone-card__meta {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.field-card {
+  padding: 20px;
+  border-radius: var(--radius-card-sm);
+  border: 2px solid var(--color-border-medium);
+  background: #fff;
+  margin-bottom: 16px;
+}
+
+.field-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.field-card__name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.field-card__meta {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.field-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.field-card__zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.zone-chip {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-light);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}

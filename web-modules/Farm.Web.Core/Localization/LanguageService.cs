@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -8,6 +9,7 @@ public class LanguageService : ILanguageService
 {
     private readonly IJSRuntime _jsRuntime;
     private readonly NavigationManager _nav;
+    private readonly HttpClient _httpClient;
 
     public IReadOnlyList<(string Code, string DisplayName)> AvailableLanguages { get; } = new List<(string, string)>
     {
@@ -17,19 +19,29 @@ public class LanguageService : ILanguageService
 
     public string CurrentLanguage => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
-    public LanguageService(IJSRuntime jsRuntime, NavigationManager nav)
+    public LanguageService(IJSRuntime jsRuntime, NavigationManager nav, HttpClient httpClient)
     {
         _jsRuntime = jsRuntime;
         _nav = nav;
+        _httpClient = httpClient;
     }
 
     public async Task SetLanguageAsync(string code)
     {
-        // Client-side only for now — no Users/Auth backend exists yet.
-        // Once Core: Users + Auth lands, extend this to also persist
-        // server-side (e.g. PATCH /api/v1/core/users/me/language);
-        // ILanguageService's public shape shouldn't need to change.
         await _jsRuntime.InvokeVoidAsync("farmCulture.set", code);
+
+        // Best-effort server-side persistence — localStorage (above) remains the
+        // fast local cache that drives the synchronous pre-render culture bootstrap
+        // in Program.cs, so a failed/offline PATCH here must not block switching.
+        try
+        {
+            await _httpClient.PatchAsJsonAsync("api/v1/core/users/me/language", new { language = code });
+        }
+        catch (HttpRequestException)
+        {
+            // Ignored — the client-side switch above already succeeded.
+        }
+
         _nav.NavigateTo(_nav.Uri, forceLoad: true);
     }
 }

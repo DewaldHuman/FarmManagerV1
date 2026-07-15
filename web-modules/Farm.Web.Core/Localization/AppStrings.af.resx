@@ -199,4 +199,142 @@
   <data name="Dashboard_Task_DueToday" xml:space="preserve">
     <value>Verskuldig vandag</value>
   </data>
+
+  <data name="Common_Hectares" xml:space="preserve">
+    <value>ha</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Laai tans&#8230;</value>
+  </data>
+  <data name="Common_Archive" xml:space="preserve">
+    <value>Argiveer</value>
+  </data>
+
+  <data name="ZoneList_Eyebrow" xml:space="preserve">
+    <value>Besproeiing</value>
+  </data>
+  <data name="ZoneList_Title" xml:space="preserve">
+    <value>Sones</value>
+  </data>
+  <data name="ZoneList_ManageFieldsZones" xml:space="preserve">
+    <value>Bestuur Kampe &amp; Sones</value>
+  </data>
+  <data name="ZoneList_Empty" xml:space="preserve">
+    <value>Nog geen sones nie. Voeg 'n kamp en sone by om te begin.</value>
+  </data>
+  <data name="ZoneList_Status_OnSchedule" xml:space="preserve">
+    <value>Volgens skedule</value>
+  </data>
+  <data name="ZoneList_Status_Due" xml:space="preserve">
+    <value>Verskuldig</value>
+  </data>
+  <data name="ZoneList_Status_Overdue" xml:space="preserve">
+    <value>Agterstallig</value>
+  </data>
+
+  <data name="FarmStructure_Eyebrow" xml:space="preserve">
+    <value>Besproeiing</value>
+  </data>
+  <data name="FarmStructure_Title" xml:space="preserve">
+    <value>Plaasstruktuur</value>
+  </data>
+  <data name="FarmStructure_AddField" xml:space="preserve">
+    <value>+ Voeg Kamp By</value>
+  </data>
+  <data name="FarmStructure_AddZone" xml:space="preserve">
+    <value>+ Voeg Sone By</value>
+  </data>
+  <data name="FarmStructure_Edit" xml:space="preserve">
+    <value>Wysig</value>
+  </data>
+  <data name="FarmStructure_Empty" xml:space="preserve">
+    <value>Nog geen kampe nie. Voeg jou eerste kamp by om te begin.</value>
+  </data>
+
+  <data name="FieldForm_AddTitle" xml:space="preserve">
+    <value>Voeg Kamp By</value>
+  </data>
+  <data name="FieldForm_EditTitle" xml:space="preserve">
+    <value>Wysig Kamp</value>
+  </data>
+  <data name="FieldForm_Name" xml:space="preserve">
+    <value>Naam</value>
+  </data>
+  <data name="FieldForm_AreaHa" xml:space="preserve">
+    <value>Oppervlakte (hektaar)</value>
+  </data>
+  <data name="FieldForm_Notes" xml:space="preserve">
+    <value>Notas</value>
+  </data>
+  <data name="FieldForm_Save" xml:space="preserve">
+    <value>Stoor</value>
+  </data>
+  <data name="FieldForm_Error" xml:space="preserve">
+    <value>Kon nie die kamp stoor nie &#8212; kyk die invoer na en probeer weer.</value>
+  </data>
+
+  <data name="ZoneForm_AddTitle" xml:space="preserve">
+    <value>Voeg Sone By</value>
+  </data>
+  <data name="ZoneForm_EditTitle" xml:space="preserve">
+    <value>Wysig Sone</value>
+  </data>
+  <data name="ZoneForm_Name" xml:space="preserve">
+    <value>Naam</value>
+  </data>
+  <data name="ZoneForm_Field" xml:space="preserve">
+    <value>Kamp</value>
+  </data>
+  <data name="ZoneForm_AreaHa" xml:space="preserve">
+    <value>Oppervlakte (hektaar)</value>
+  </data>
+  <data name="ZoneForm_Crop" xml:space="preserve">
+    <value>Gewas</value>
+  </data>
+  <data name="ZoneForm_IrrigationSystemType" xml:space="preserve">
+    <value>Besproeiingstelsel</value>
+  </data>
+  <data name="ZoneForm_Irrigation_Drip" xml:space="preserve">
+    <value>Drup</value>
+  </data>
+  <data name="ZoneForm_Irrigation_Sprinkler" xml:space="preserve">
+    <value>Sproeier</value>
+  </data>
+  <data name="ZoneForm_Irrigation_Flood" xml:space="preserve">
+    <value>Vloed</value>
+  </data>
+  <data name="ZoneForm_Irrigation_None" xml:space="preserve">
+    <value>Geen</value>
+  </data>
+  <data name="ZoneForm_Save" xml:space="preserve">
+    <value>Stoor</value>
+  </data>
+  <data name="ZoneForm_Error" xml:space="preserve">
+    <value>Kon nie die sone stoor nie &#8212; kyk die invoer na en probeer weer.</value>
+  </data>
+
+  <data name="FarmStructure_Settings" xml:space="preserve">
+    <value>Plaasinstellings</value>
+  </data>
+  <data name="FarmSettings_Title" xml:space="preserve">
+    <value>Plaasinstellings</value>
+  </data>
+  <data name="FarmSettings_Timezone" xml:space="preserve">
+    <value>Tydsone</value>
+  </data>
+  <data name="FarmSettings_KcEstablishment" xml:space="preserve">
+    <value>Gewaskoëffisiënt — vestiging (Kc)</value>
+  </data>
+  <data name="FarmSettings_KcMidseason" xml:space="preserve">
+    <value>Gewaskoëffisiënt — middelseisoen (Kc)</value>
+  </data>
+  <data name="FarmSettings_KcLateseason" xml:space="preserve">
+    <value>Gewaskoëffisiënt — laatseisoen (Kc)</value>
+  </data>
+  <data name="FarmSettings_Save" xml:space="preserve">
+    <value>Stoor</value>
+  </data>
+  <data name="FarmSettings_Error" xml:space="preserve">
+    <value>Kon nie die instellings stoor nie &#8212; kyk die invoer na en probeer weer.</value>
+  </data>
 </root>

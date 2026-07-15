@@ -1,0 +1,68 @@
+@page "/farm/fields"
+@layout AppShellLayout
+@attribute [Authorize]
+@inject IFarmService FarmService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<div class="page-header">
+    <div>
+        <div class="app-shell__eyebrow">@Localizer["FarmStructure_Eyebrow"]</div>
+        <h1 class="app-shell__title">@Localizer["FarmStructure_Title"]</h1>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" @onclick="GoToSettings">@Localizer["FarmStructure_Settings"]</button>
+        <button class="btn btn-primary" @onclick="GoToAddField">@Localizer["FarmStructure_AddField"]</button>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <p>@Localizer["Common_Loading"]</p>
+}
+else if (_fields.Count == 0)
+{
+    <p class="page-subtitle">@Localizer["FarmStructure_Empty"]</p>
+}
+else
+{
+    @foreach (var field in _fields)
+    {
+        <div class="field-card">
+            <div class="field-card__header">
+                <div class="field-card__name">@field.Name</div>
+                <button class="btn btn-secondary" @onclick="() => GoToEditField(field.Id)">@Localizer["FarmStructure_Edit"]</button>
+            </div>
+            <div class="field-card__meta">@field.AreaHa.ToString("0.##") @Localizer["Common_Hectares"]</div>
+            <div class="field-card__actions">
+                <button class="btn btn-secondary" @onclick="() => GoToAddZone(field.Id)">@Localizer["FarmStructure_AddZone"]</button>
+            </div>
+            <div class="field-card__zones">
+                @foreach (var zone in ZonesFor(field.Id))
+                {
+                    <a href="@($"/farm/zones/{zone.Id}/edit")" class="zone-chip">@zone.Name</a>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<FieldDto> _fields = new();
+    private List<ZoneDto> _zones = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _fields = await FarmService.ListFieldsAsync();
+        _zones = await FarmService.ListZonesAsync();
+        _loading = false;
+    }
+
+    private List<ZoneDto> ZonesFor(Guid fieldId) => _zones.Where(z => z.FieldId == fieldId).ToList();
+
+    private void GoToSettings() => Nav.NavigateTo("/farm/settings");
+    private void GoToAddField() => Nav.NavigateTo("/farm/fields/new");
+    private void GoToEditField(Guid id) => Nav.NavigateTo($"/farm/fields/{id}/edit");
+    private void GoToAddZone(Guid fieldId) => Nav.NavigateTo($"/farm/zones/new?fieldId={fieldId}");
+}

@@ -14,16 +14,32 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddLocalization();
-builder.Services.AddScoped<ILanguageService, LanguageService>();
 
 // Auth
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? builder.HostEnvironment.BaseAddress;
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, FarmAuthStateProvider>();
+builder.Services.AddTransient<AuthTokenHandler>();
 builder.Services.AddHttpClient<IAuthService, AuthService>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
-});
+}).AddHttpMessageHandler<AuthTokenHandler>(); // needed for GetCurrentUserAsync (/auth/me), called from LoginAsync after the token is stored
+
+// Language — typed client (not AddScoped) since SetLanguageAsync now also
+// PATCHes the backend to persist the preference per-user (localStorage stays
+// the fast local cache driving the synchronous pre-render culture bootstrap below).
+builder.Services.AddHttpClient<ILanguageService, LanguageService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+}).AddHttpMessageHandler<AuthTokenHandler>();
+
+// Farm registry — attaches the stored JWT to every request via AuthTokenHandler
+// (AuthService never needed this: /auth/login is anonymous and nothing else
+// called an authenticated endpoint until this feature).
+builder.Services.AddHttpClient<Farm.Web.Core.Registry.IFarmService, Farm.Web.Core.Registry.FarmService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 var host = builder.Build();
 

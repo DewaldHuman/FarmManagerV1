@@ -1,0 +1,83 @@
+@page "/farm/settings"
+@layout AppShellLayout
+@attribute [Authorize]
+@inject IFarmService FarmService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<div class="page-header">
+    <h1 class="app-shell__title">@Localizer["FarmSettings_Title"]</h1>
+</div>
+
+@if (_loading)
+{
+    <p>@Localizer["Common_Loading"]</p>
+}
+else
+{
+    <div class="card" style="padding: 24px; max-width: 560px;">
+        <label class="form-label" for="settings-timezone">@Localizer["FarmSettings_Timezone"]</label>
+        <input id="settings-timezone" class="form-input" @bind="Timezone" @bind:event="oninput" />
+
+        <label class="form-label" for="settings-kc-establishment">@Localizer["FarmSettings_KcEstablishment"]</label>
+        <input id="settings-kc-establishment" type="number" step="0.01" class="form-input" @bind="KcEstablishment" @bind:event="oninput" />
+
+        <label class="form-label" for="settings-kc-midseason">@Localizer["FarmSettings_KcMidseason"]</label>
+        <input id="settings-kc-midseason" type="number" step="0.01" class="form-input" @bind="KcMidseason" @bind:event="oninput" />
+
+        <label class="form-label" for="settings-kc-lateseason">@Localizer["FarmSettings_KcLateseason"]</label>
+        <input id="settings-kc-lateseason" type="number" step="0.01" class="form-input" @bind="KcLateseason" @bind:event="oninput" />
+
+        @if (_showError)
+        {
+            <div class="form-error">@Localizer["FarmSettings_Error"]</div>
+        }
+
+        <button class="btn btn-primary" @onclick="Save" disabled="@_saving">@Localizer["FarmSettings_Save"]</button>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _saving;
+    private bool _showError;
+
+    private string Timezone = string.Empty;
+    private double KcEstablishment;
+    private double KcMidseason;
+    private double KcLateseason;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await FarmService.GetSettingsAsync();
+        if (settings is not null)
+        {
+            Timezone = settings.Timezone;
+            KcEstablishment = settings.KcEstablishment;
+            KcMidseason = settings.KcMidseason;
+            KcLateseason = settings.KcLateseason;
+        }
+
+        _loading = false;
+    }
+
+    private async Task Save()
+    {
+        _saving = true;
+        _showError = false;
+
+        var result = await FarmService.UpdateSettingsAsync(
+            new SettingsUpdateRequest(Timezone, KcEstablishment, KcMidseason, KcLateseason));
+
+        _saving = false;
+
+        if (result is not null)
+        {
+            Nav.NavigateTo("/farm/fields");
+        }
+        else
+        {
+            _showError = true;
+        }
+    }
+}

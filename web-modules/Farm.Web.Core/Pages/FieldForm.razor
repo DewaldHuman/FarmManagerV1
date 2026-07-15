@@ -1,0 +1,100 @@
+@page "/farm/fields/new"
+@page "/farm/fields/{Id:guid}/edit"
+@layout AppShellLayout
+@attribute [Authorize]
+@inject IFarmService FarmService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<div class="page-header">
+    <h1 class="app-shell__title">@(IsEdit ? Localizer["FieldForm_EditTitle"] : Localizer["FieldForm_AddTitle"])</h1>
+</div>
+
+<div class="card" style="padding: 24px; max-width: 560px;">
+    <label class="form-label" for="field-name">@Localizer["FieldForm_Name"]</label>
+    <input id="field-name" class="form-input" @bind="Name" @bind:event="oninput" />
+
+    <label class="form-label" for="field-area">@Localizer["FieldForm_AreaHa"]</label>
+    <input id="field-area" type="number" step="0.01" class="form-input" @bind="AreaHa" @bind:event="oninput" />
+
+    <label class="form-label" for="field-notes">@Localizer["FieldForm_Notes"]</label>
+    <input id="field-notes" class="form-input" @bind="Notes" @bind:event="oninput" />
+
+    @if (_showError)
+    {
+        <div class="form-error">@Localizer["FieldForm_Error"]</div>
+    }
+
+    <button class="btn btn-primary" @onclick="Save" disabled="@_saving">@Localizer["FieldForm_Save"]</button>
+    @if (IsEdit)
+    {
+        <button class="btn btn-secondary" @onclick="Archive" disabled="@_saving">@Localizer["Common_Archive"]</button>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    private bool IsEdit => Id.HasValue;
+    private string Name = string.Empty;
+    private double AreaHa;
+    private string? Notes;
+    private bool _saving;
+    private bool _showError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            var field = await FarmService.GetFieldAsync(Id!.Value);
+            if (field is not null)
+            {
+                Name = field.Name;
+                AreaHa = field.AreaHa;
+                Notes = field.Notes;
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        _saving = true;
+        _showError = false;
+
+        FieldDto? result = IsEdit
+            ? await FarmService.UpdateFieldAsync(Id!.Value, new FieldUpdateRequest(Name, AreaHa, Notes))
+            : await FarmService.CreateFieldAsync(new FieldCreateRequest(Name, AreaHa, Notes));
+
+        _saving = false;
+
+        if (result is not null)
+        {
+            Nav.NavigateTo("/farm/fields");
+        }
+        else
+        {
+            _showError = true;
+        }
+    }
+
+    private async Task Archive()
+    {
+        if (!IsEdit)
+        {
+            return;
+        }
+
+        _saving = true;
+        var success = await FarmService.ArchiveFieldAsync(Id!.Value);
+        _saving = false;
+
+        if (success)
+        {
+            Nav.NavigateTo("/farm/fields");
+        }
+        else
+        {
+            _showError = true;
+        }
+    }
+}

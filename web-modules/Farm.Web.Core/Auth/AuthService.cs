@@ -39,6 +39,16 @@ public class AuthService : IAuthService
         }
 
         await _jsRuntime.InvokeVoidAsync("farmAuth.set", token.access_token);
+
+        // Sync the client's stored language to this user's saved preference so the
+        // next boot's synchronous culture bootstrap (Program.cs) already picks it
+        // up — this call needs the token we just stored, since /auth/me requires auth.
+        var user = await GetCurrentUserAsync();
+        if (user is not null)
+        {
+            await _jsRuntime.InvokeVoidAsync("farmCulture.set", user.PreferredLanguage);
+        }
+
         _authStateProvider.NotifyUserAuthentication(token.access_token);
         return true;
     }
@@ -47,6 +57,17 @@ public class AuthService : IAuthService
     {
         await _jsRuntime.InvokeVoidAsync("farmAuth.clear");
         _authStateProvider.NotifyUserLogout();
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        var response = await _httpClient.GetAsync("api/v1/core/auth/me");
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<UserDto>();
     }
 
     private sealed record TokenResponse(string access_token, string token_type);

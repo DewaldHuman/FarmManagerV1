@@ -199,4 +199,142 @@
   <data name="Dashboard_Task_DueToday" xml:space="preserve">
     <value>Due today</value>
   </data>
+
+  <data name="Common_Hectares" xml:space="preserve">
+    <value>ha</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Loading&#8230;</value>
+  </data>
+  <data name="Common_Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+
+  <data name="ZoneList_Eyebrow" xml:space="preserve">
+    <value>Irrigation</value>
+  </data>
+  <data name="ZoneList_Title" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="ZoneList_ManageFieldsZones" xml:space="preserve">
+    <value>Manage Fields &amp; Zones</value>
+  </data>
+  <data name="ZoneList_Empty" xml:space="preserve">
+    <value>No zones yet. Add a field and zone to get started.</value>
+  </data>
+  <data name="ZoneList_Status_OnSchedule" xml:space="preserve">
+    <value>On schedule</value>
+  </data>
+  <data name="ZoneList_Status_Due" xml:space="preserve">
+    <value>Due</value>
+  </data>
+  <data name="ZoneList_Status_Overdue" xml:space="preserve">
+    <value>Overdue</value>
+  </data>
+
+  <data name="FarmStructure_Eyebrow" xml:space="preserve">
+    <value>Irrigation</value>
+  </data>
+  <data name="FarmStructure_Title" xml:space="preserve">
+    <value>Farm Structure</value>
+  </data>
+  <data name="FarmStructure_AddField" xml:space="preserve">
+    <value>+ Add Field</value>
+  </data>
+  <data name="FarmStructure_AddZone" xml:space="preserve">
+    <value>+ Add Zone</value>
+  </data>
+  <data name="FarmStructure_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="FarmStructure_Empty" xml:space="preserve">
+    <value>No fields yet. Add your first field to get started.</value>
+  </data>
+
+  <data name="FieldForm_AddTitle" xml:space="preserve">
+    <value>Add Field</value>
+  </data>
+  <data name="FieldForm_EditTitle" xml:space="preserve">
+    <value>Edit Field</value>
+  </data>
+  <data name="FieldForm_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="FieldForm_AreaHa" xml:space="preserve">
+    <value>Area (hectares)</value>
+  </data>
+  <data name="FieldForm_Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="FieldForm_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="FieldForm_Error" xml:space="preserve">
+    <value>Couldn't save the field &#8212; check the inputs and try again.</value>
+  </data>
+
+  <data name="ZoneForm_AddTitle" xml:space="preserve">
+    <value>Add Zone</value>
+  </data>
+  <data name="ZoneForm_EditTitle" xml:space="preserve">
+    <value>Edit Zone</value>
+  </data>
+  <data name="ZoneForm_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ZoneForm_Field" xml:space="preserve">
+    <value>Field</value>
+  </data>
+  <data name="ZoneForm_AreaHa" xml:space="preserve">
+    <value>Area (hectares)</value>
+  </data>
+  <data name="ZoneForm_Crop" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="ZoneForm_IrrigationSystemType" xml:space="preserve">
+    <value>Irrigation System</value>
+  </data>
+  <data name="ZoneForm_Irrigation_Drip" xml:space="preserve">
+    <value>Drip</value>
+  </data>
+  <data name="ZoneForm_Irrigation_Sprinkler" xml:space="preserve">
+    <value>Sprinkler</value>
+  </data>
+  <data name="ZoneForm_Irrigation_Flood" xml:space="preserve">
+    <value>Flood</value>
+  </data>
+  <data name="ZoneForm_Irrigation_None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="ZoneForm_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ZoneForm_Error" xml:space="preserve">
+    <value>Couldn't save the zone &#8212; check the inputs and try again.</value>
+  </data>
+
+  <data name="FarmStructure_Settings" xml:space="preserve">
+    <value>Farm Settings</value>
+  </data>
+  <data name="FarmSettings_Title" xml:space="preserve">
+    <value>Farm Settings</value>
+  </data>
+  <data name="FarmSettings_Timezone" xml:space="preserve">
+    <value>Timezone</value>
+  </data>
+  <data name="FarmSettings_KcEstablishment" xml:space="preserve">
+    <value>Crop coefficient — establishment (Kc)</value>
+  </data>
+  <data name="FarmSettings_KcMidseason" xml:space="preserve">
+    <value>Crop coefficient — mid-season (Kc)</value>
+  </data>
+  <data name="FarmSettings_KcLateseason" xml:space="preserve">
+    <value>Crop coefficient — late season (Kc)</value>
+  </data>
+  <data name="FarmSettings_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="FarmSettings_Error" xml:space="preserve">
+    <value>Couldn't save settings &#8212; check the inputs and try again.</value>
+  </data>
 </root>
