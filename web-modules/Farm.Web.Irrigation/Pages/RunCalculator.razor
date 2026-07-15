@@ -198,6 +198,19 @@ else
         {
             _zones = await FarmService.ListZonesAsync();
         }
+
+        // Falls back to the hardcoded CropCoefficients defaults (already set
+        // as _categories' field initializer) if Settings is unreachable.
+        var settings = await FarmService.GetSettingsAsync();
+        if (settings is not null)
+        {
+            _categories = BuildCategories(new[]
+            {
+                new Choice("Establishment", settings.KcEstablishment),
+                new Choice("Mid-season", settings.KcMidseason),
+                new Choice("Late season", settings.KcLateseason),
+            });
+        }
     }
 
     private void OnZoneSelected(ChangeEventArgs e)
@@ -398,7 +411,12 @@ else
         new Choice("Tropical, year-round (×1.3)", 1.3),
     };
 
-    private static readonly IReadOnlyList<Category> _categories = new[]
+    // Rebuilt in OnInitializedAsync once Core Settings' Kc values are fetched;
+    // starts with the hardcoded CropCoefficients defaults so the picker isn't
+    // blank before that async fetch resolves.
+    private IReadOnlyList<Category> _categories = BuildCategories(GrowthStages);
+
+    private static IReadOnlyList<Category> BuildCategories(IReadOnlyList<Choice> growthStages) => new[]
     {
         new Category("Run time & volume", new[]
         {
@@ -406,7 +424,7 @@ else
                 "Reference evapotranspiration + crop coefficient → recommended run-time.",
                 new Field[]
                 {
-                    new ChoiceField("kc", "Crop growth stage", GrowthStages),
+                    new ChoiceField("kc", "Crop growth stage", growthStages),
                     new NumberField("et0", "Reference ET₀ (mm/day)", 5.2),
                     new NumberField("days", "Days since last irrigation", 3),
                     new NumberField("rain", "Rainfall since last run (mm)", 0, AllowZero: true),
@@ -438,7 +456,7 @@ else
                 "Crop coefficient and ET₀ → agronomic water demand over a period (before system losses).",
                 new Field[]
                 {
-                    new ChoiceField("kc", "Crop growth stage", GrowthStages),
+                    new ChoiceField("kc", "Crop growth stage", growthStages),
                     new NumberField("et0", "Reference ET₀ (mm/day)", 5.2),
                     new NumberField("area", "Area (ha)", 2.4),
                     new NumberField("days", "Number of days", 7),

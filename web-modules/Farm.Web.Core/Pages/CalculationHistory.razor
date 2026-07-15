@@ -1,0 +1,124 @@
+@page "/irrigation/history"
+@layout AppShellLayout
+@attribute [Authorize]
+@using System.Globalization
+@inject IFarmService FarmService
+@inject IIrrigationService IrrigationService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<div class="page-header">
+    <div>
+        <div class="app-shell__eyebrow">@Localizer["CalculationHistory_Eyebrow"]</div>
+        <h1 class="app-shell__title">@Localizer["CalculationHistory_Title"]</h1>
+    </div>
+</div>
+
+@if (_zoneName is not null)
+{
+    <p class="page-subtitle">@Localizer["CalculationHistory_LoggingAgainst"] <strong>@_zoneName</strong></p>
+}
+else
+{
+    <div style="margin-bottom: 24px;">
+        <label class="form-label">@Localizer["CalculationHistory_ZonePicker"]</label>
+        <select class="calc-select" @onchange="OnZoneSelected">
+            <option value="">@Localizer["CalculationHistory_ZonePicker_Placeholder"]</option>
+            @foreach (var zone in _zones)
+            {
+                <option value="@zone.Id">@zone.Name (@zone.FieldName)</option>
+            }
+        </select>
+    </div>
+}
+
+@if (_loading)
+{
+    <p>@Localizer["Common_Loading"]</p>
+}
+else if (_selectedZoneId is null)
+{
+    <p class="page-subtitle">@Localizer["CalculationHistory_ChooseZone"]</p>
+}
+else if (_runs.Count == 0)
+{
+    <p class="page-subtitle">@Localizer["CalculationHistory_Empty"]</p>
+}
+else
+{
+    <div class="history-list">
+        @foreach (var run in _runs)
+        {
+            <div class="history-card">
+                <div class="history-card__header">
+                    <div class="history-card__title">@CalculatorLabel(run.CalculatorType)</div>
+                    <div class="history-card__date">@run.CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div>
+                </div>
+                <div class="history-card__row">@Localizer["CalculationHistory_Inputs"]: @FormatDict(run.Inputs)</div>
+                <div class="history-card__row">@Localizer["CalculationHistory_Outputs"]: @FormatDict(run.Outputs)</div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "zone")]
+    public Guid? ZoneId { get; set; }
+
+    private static readonly Dictionary<string, string> CalculatorLabels = new()
+    {
+        ["et0-run-time"] = "ET₀ Run-Time",
+        ["manual-volume"] = "Manual Volume",
+        ["drip-emitter"] = "Drip Emitter Run-Time",
+        ["set-time"] = "Set Time for Depth",
+    };
+
+    private string? _zoneName;
+    private List<ZoneDto> _zones = new();
+    private Guid? _selectedZoneId;
+    private List<CalculationRunDto> _runs = new();
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ZoneId is not null)
+        {
+            var zone = await FarmService.GetZoneAsync(ZoneId.Value);
+            if (zone is not null)
+            {
+                _selectedZoneId = zone.Id;
+                _zoneName = zone.Name;
+                await LoadRuns();
+            }
+        }
+        else
+        {
+            _zones = await FarmService.ListZonesAsync();
+        }
+    }
+
+    private async Task OnZoneSelected(ChangeEventArgs e)
+    {
+        _selectedZoneId = Guid.TryParse(e.Value?.ToString(), out var id) ? id : null;
+        await LoadRuns();
+    }
+
+    private async Task LoadRuns()
+    {
+        if (_selectedZoneId is null)
+        {
+            _runs = new();
+            return;
+        }
+
+        _loading = true;
+        _runs = await IrrigationService.ListCalculationRunsAsync(_selectedZoneId.Value);
+        _loading = false;
+    }
+
+    private static string CalculatorLabel(string calculatorType) =>
+        CalculatorLabels.GetValueOrDefault(calculatorType, calculatorType);
+
+    private static string FormatDict(Dictionary<string, double> values) =>
+        string.Join(", ", values.Select(kv => $"{kv.Key}: {kv.Value.ToString("0.##", CultureInfo.InvariantCulture)}"));
+}

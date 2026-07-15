@@ -38,6 +38,10 @@ else
                     <span>@zone.Crop</span>
                     <span>@zone.AreaHa.ToString("0.##") @Localizer["Common_Hectares"]</span>
                 </div>
+                <a class="zone-card__history-link" href="@($"/irrigation/history?zone={zone.Id}")"
+                   @onclick="() => GoToHistory(zone.Id)" @onclick:preventDefault="true" @onclick:stopPropagation="true">
+                    @Localizer["ZoneList_ViewHistory"]
+                </a>
             </div>
         }
     </div>
@@ -56,6 +60,8 @@ else
     private void GoToFarmStructure() => Nav.NavigateTo("/farm/fields");
 
     private void GoToRunCalculator(Guid zoneId) => Nav.NavigateTo($"/irrigation/run-calculator?zone={zoneId}");
+
+    private void GoToHistory(Guid zoneId) => Nav.NavigateTo($"/irrigation/history?zone={zoneId}");
 
     private string StatusPillClass(string status) => status switch
     {

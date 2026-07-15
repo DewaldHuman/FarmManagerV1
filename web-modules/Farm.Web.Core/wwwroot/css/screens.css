@@ -321,3 +321,50 @@
   font-weight: 600;
   text-decoration: none;
 }
+
+.zone-card__history-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+/* ---- Calculation History ---- */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-card {
+  padding: 16px 20px;
+  border-radius: var(--radius-card-sm);
+  border: 2px solid var(--color-border-medium);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.history-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.history-card__date {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.history-card__row {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

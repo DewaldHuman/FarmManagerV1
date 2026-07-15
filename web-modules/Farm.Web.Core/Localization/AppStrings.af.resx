@@ -337,4 +337,34 @@
   <data name="FarmSettings_Error" xml:space="preserve">
     <value>Kon nie die instellings stoor nie &#8212; kyk die invoer na en probeer weer.</value>
   </data>
+  <data name="ZoneList_ViewHistory" xml:space="preserve">
+    <value>Bekyk geskiedenis</value>
+  </data>
+  <data name="CalculationHistory_Eyebrow" xml:space="preserve">
+    <value>Besproeiing</value>
+  </data>
+  <data name="CalculationHistory_Title" xml:space="preserve">
+    <value>Berekeningsgeskiedenis</value>
+  </data>
+  <data name="CalculationHistory_LoggingAgainst" xml:space="preserve">
+    <value>Geskiedenis vir:</value>
+  </data>
+  <data name="CalculationHistory_ZonePicker" xml:space="preserve">
+    <value>Sone</value>
+  </data>
+  <data name="CalculationHistory_ZonePicker_Placeholder" xml:space="preserve">
+    <value>&#8212; Kies 'n sone &#8212;</value>
+  </data>
+  <data name="CalculationHistory_ChooseZone" xml:space="preserve">
+    <value>Kies 'n sone hierbo om die gelogde berekenings te sien.</value>
+  </data>
+  <data name="CalculationHistory_Empty" xml:space="preserve">
+    <value>Nog geen berekenings gelogboek vir hierdie sone nie.</value>
+  </data>
+  <data name="CalculationHistory_Inputs" xml:space="preserve">
+    <value>Toevoer</value>
+  </data>
+  <data name="CalculationHistory_Outputs" xml:space="preserve">
+    <value>Uitvoer</value>
+  </data>
 </root>

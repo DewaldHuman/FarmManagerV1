@@ -337,4 +337,34 @@
   <data name="FarmSettings_Error" xml:space="preserve">
     <value>Couldn't save settings &#8212; check the inputs and try again.</value>
   </data>
+  <data name="ZoneList_ViewHistory" xml:space="preserve">
+    <value>View history</value>
+  </data>
+  <data name="CalculationHistory_Eyebrow" xml:space="preserve">
+    <value>Irrigation</value>
+  </data>
+  <data name="CalculationHistory_Title" xml:space="preserve">
+    <value>Calculation History</value>
+  </data>
+  <data name="CalculationHistory_LoggingAgainst" xml:space="preserve">
+    <value>Showing history for:</value>
+  </data>
+  <data name="CalculationHistory_ZonePicker" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="CalculationHistory_ZonePicker_Placeholder" xml:space="preserve">
+    <value>&#8212; Select a zone &#8212;</value>
+  </data>
+  <data name="CalculationHistory_ChooseZone" xml:space="preserve">
+    <value>Choose a zone above to view its logged calculation runs.</value>
+  </data>
+  <data name="CalculationHistory_Empty" xml:space="preserve">
+    <value>No calculation runs logged yet for this zone.</value>
+  </data>
+  <data name="CalculationHistory_Inputs" xml:space="preserve">
+    <value>Inputs</value>
+  </data>
+  <data name="CalculationHistory_Outputs" xml:space="preserve">
+    <value>Outputs</value>
+  </data>
 </root>
