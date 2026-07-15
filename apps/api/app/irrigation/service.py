@@ -1,5 +1,7 @@
 import uuid
+from datetime import datetime
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core import service as core_service
@@ -49,3 +51,19 @@ def list_calculation_runs(db: Session, zone_id: uuid.UUID) -> list[dict]:
         .all()
     )
     return [_run_to_read_kwargs(run, zone["name"]) for run in runs]
+
+
+def get_last_run_at_by_zone(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, datetime]:
+    """Most recent CalculationRun.created_at per zone id — consumed by
+    app.core.service to compute Zone.status (on-schedule/due/overdue).
+    """
+    if not zone_ids:
+        return {}
+
+    rows = (
+        db.query(CalculationRun.zone_id, func.max(CalculationRun.created_at))
+        .filter(CalculationRun.zone_id.in_(zone_ids))
+        .group_by(CalculationRun.zone_id)
+        .all()
+    )
+    return dict(rows)

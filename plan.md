@@ -9,7 +9,7 @@ Living roadmap and task tracker. Update this as work happens — check off tasks
 - **Active phase:** Phase 1 — Foundation + Irrigation
 - **Last updated:** 2026-07-15
 - **Blockers:** none
-- **Just landed:** Kc-defaults wiring for the ET₀ Run-Time/Crop Water Need calculators + Calculation History UI — see Decisions Log
+- **Just landed:** Real `Zone.status` computation via a manual per-zone irrigation interval — see Decisions Log
 
 ---
 
@@ -35,7 +35,7 @@ Goal: running end-to-end on the farm PC via Docker Compose — auth, farm/field/
 - [x] Irrigation: UI to browse a zone's logged calculation-run history — `CalculationHistory.razor` at `/irrigation/history` (fills the previously-dead NavMenu link), zone-scoped via `?zone={id}` or a picker, reachable from a "View history" link on each Zone List card
 - [x] Irrigation: wire `RunCalculator.razor` to read the `?zone={id}` query param (already passed by Zone List's card click) — shows a "Logging against: {zone}" banner; a zone `<select>` fallback appears when navigated to directly without the param
 - [x] Irrigation: wire the ET₀ Run-Time and Crop Water Need calculators (the only two using the Kc dropdown) to Core Settings' Kc defaults instead of the hardcoded `Farm.Irrigation.Calculators/Presets.cs` constants, now that `GET /api/v1/core/settings` exists — the other 25 calculators are unaffected
-- [ ] Core: real `Zone.status` computation (on schedule / due / overdue) — currently a hardcoded `"on-schedule"` placeholder in `service.py`, needs Irrigation's schedule/`CalculationRun` model to compute against
+- [x] Core: real `Zone.status` computation (on schedule / due / overdue) — manual per-zone `irrigation_interval_days` (optional, set in `ZoneForm.razor`) compared against the zone's most recent logged `CalculationRun` (falling back to `zone.created_at` if never run). Auto-computed intervals from weather/soil/crop water balance remain future work (the real `Schedule` model)
 - [ ] Seed script with real farm's fields/zones
 - [ ] Docker Compose running locally, accessible over LAN
 - [ ] Backup script (`pg_dump` on schedule)
@@ -76,6 +76,18 @@ Goal: running end-to-end on the farm PC via Docker Compose — auth, farm/field/
 ## Decisions Log
 
 > One line per significant decision, newest first. If a decision needs more explanation, link to a file in `docs/decisions/`.
+
+- 2026-07-15 — **Real Zone.status via manual per-zone irrigation interval.** `ZoneRead.status` had been a hardcoded `"on-schedule"` placeholder since Farm/Field/Zone was first built, always flagged as blocked on "Irrigation's schedule model" — that model (auto-computed intervals from weather + soil data) is still real future work, but a much smaller manual version is now buildable since `CalculationRun` exists.
+
+  **The rule:** each `Zone` gets an optional `irrigation_interval_days` ("water every N days", set in `ZoneForm.razor`). If unset, status stays `"on-schedule"` (nothing to be due against). If set, compare days elapsed since the zone's most recent logged `CalculationRun` — or `zone.created_at` if it's never been run — against the interval: under it → `"on-schedule"`, at or past it but within a fixed `STATUS_DUE_GRACE_DAYS = 3` grace window → `"due"`, beyond the grace window → `"overdue"`. The grace constant is intentionally a fixed code value, not Settings-configurable (explicit user decision — that configurability was declined as unneeded scope).
+
+  **Backend:** `core.zones` gains `irrigation_interval_days` (nullable `Integer`, migration `core_add_zone_irrigation_interval`). New `app.irrigation.service.get_last_run_at_by_zone(db, zone_ids)` — a single grouped query (`func.max(CalculationRun.created_at)` grouped by `zone_id`) — batches the "most recent run per zone" lookup so `list_zones` stays a single extra query, not N+1. `core.service._zone_row_to_read_kwargs` now computes real `status` via a new pure `_compute_zone_status(interval_days, last_activity_at)` helper.
+
+  **Architectural note, called out deliberately:** computing this needs Core's `zone` functions to read Irrigation's `CalculationRun` data — an inversion of the normal "Core is the stable base, other modules depend on it" direction. Rather than threading a lookup dict through `list_zones`/`get_zone`/`create_zone`/`update_zone`/`archive_zone` and their router, `core/service.py`'s new `_last_run_lookup` helper does a **function-scoped (deferred) import** of `app.irrigation.service` — a top-level import would be a real circular import, since `irrigation/service.py` already imports `core/service.py` at module level to validate zones exist. This is documented as an intentional, narrow exception rather than a missed boundary violation.
+
+  **Frontend:** `ZoneForm.razor` gained a nullable-int "Water every (days, optional)" field (`FarmModels.cs`'s `ZoneDto`/`ZoneCreateRequest`/`ZoneUpdateRequest` all extended); `ZoneList.razor` needed **zero changes** — its `StatusPillClass`/`StatusLabel` switch already handled `due`/`overdue` generically (only ever exercised the default `"on-schedule"` branch before now).
+
+  Curl-verified the actual boundary logic, not just that the field saves: `interval=null` → always `on-schedule`; `interval=30` with a recent logged run → `on-schedule`; `interval=0` (forces immediate due/overdue) → `due`, both for a zone with recent activity and one that's *never* been run (confirming the `zone.created_at` fallback works). Browser-verified: set a zone's interval to `0`, confirmed its Zone List pill flipped from the old hardcoded "On schedule" to a real "Due" while every other zone stayed "On schedule"; cleared the interval back to empty, confirmed it reverted; full EN/AF check on the new form field. Test data reset to `null` after verification.
 
 - 2026-07-15 — **Kc-defaults wiring + Calculation History UI.** Two small, independent, frontend-only follow-ups (no backend changes).
 

@@ -1,9 +1,14 @@
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from app.core.models import Farm, Field, Settings, User, Zone
 from app.core.schemas import FieldCreate, FieldUpdate, SettingsUpdate, ZoneCreate, ZoneUpdate
+
+# Grace window past a zone's irrigation_interval_days before "due" becomes
+# "overdue" — a fixed constant by design (not farm-configurable via Settings).
+STATUS_DUE_GRACE_DAYS = 3
 
 
 def get_health_status() -> str:
@@ -78,7 +83,30 @@ def archive_field(db: Session, field: Field) -> Field:
     return field
 
 
-def _zone_row_to_read_kwargs(zone: Zone, field_name: str) -> dict:
+def _compute_zone_status(interval_days: int | None, last_activity_at: datetime) -> str:
+    if interval_days is None:
+        return "on-schedule"
+
+    days_since = (datetime.now(timezone.utc) - last_activity_at).days
+    if days_since < interval_days:
+        return "on-schedule"
+    if days_since < interval_days + STATUS_DUE_GRACE_DAYS:
+        return "due"
+    return "overdue"
+
+
+def _last_run_lookup(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, datetime]:
+    # Deferred import: app.irrigation.service imports this module at top
+    # level (to validate zones via get_zone), so importing it back at this
+    # module's top level would be a circular import. This is an intentional,
+    # narrow exception to Core not depending on other modules — Zone.status
+    # inherently needs Irrigation's CalculationRun data (see CLAUDE.md).
+    from app.irrigation import service as irrigation_service
+
+    return irrigation_service.get_last_run_at_by_zone(db, zone_ids)
+
+
+def _zone_row_to_read_kwargs(zone: Zone, field_name: str, last_run_at: datetime | None) -> dict:
     return {
         "id": zone.id,
         "field_id": zone.field_id,
@@ -87,10 +115,9 @@ def _zone_row_to_read_kwargs(zone: Zone, field_name: str) -> dict:
         "area_ha": zone.area_ha,
         "crop": zone.crop,
         "irrigation_system_type": zone.irrigation_system_type,
+        "irrigation_interval_days": zone.irrigation_interval_days,
         "is_active": zone.is_active,
-        # TODO(irrigation): replace with real due/overdue computation once
-        # Irrigation's schedule + CalculationRun model lands.
-        "status": "on-schedule",
+        "status": _compute_zone_status(zone.irrigation_interval_days, last_run_at or zone.created_at),
         "created_at": zone.created_at,
     }
 
@@ -102,7 +129,8 @@ def list_zones(db: Session, field_id: uuid.UUID | None = None, include_inactive:
     if not include_inactive:
         query = query.filter(Zone.is_active.is_(True))
     rows = query.order_by(Zone.name).all()
-    return [_zone_row_to_read_kwargs(zone, field_name) for zone, field_name in rows]
+    last_run_lookup = _last_run_lookup(db, [zone.id for zone, _ in rows])
+    return [_zone_row_to_read_kwargs(zone, field_name, last_run_lookup.get(zone.id)) for zone, field_name in rows]
 
 
 def get_zone(db: Session, zone_id: uuid.UUID) -> dict | None:
@@ -115,7 +143,8 @@ def get_zone(db: Session, zone_id: uuid.UUID) -> dict | None:
     if row is None:
         return None
     zone, field_name = row
-    return _zone_row_to_read_kwargs(zone, field_name)
+    last_run_at = _last_run_lookup(db, [zone.id]).get(zone.id)
+    return _zone_row_to_read_kwargs(zone, field_name, last_run_at)
 
 
 def create_zone(db: Session, payload: ZoneCreate) -> dict:
@@ -125,12 +154,13 @@ def create_zone(db: Session, payload: ZoneCreate) -> dict:
         area_ha=payload.area_ha,
         crop=payload.crop,
         irrigation_system_type=payload.irrigation_system_type,
+        irrigation_interval_days=payload.irrigation_interval_days,
     )
     db.add(zone)
     db.commit()
     db.refresh(zone)
     field = db.query(Field).filter(Field.id == zone.field_id).first()
-    return _zone_row_to_read_kwargs(zone, field.name if field else "")
+    return _zone_row_to_read_kwargs(zone, field.name if field else "", None)
 
 
 def update_zone(db: Session, zone: Zone, payload: ZoneUpdate) -> dict:
@@ -139,7 +169,8 @@ def update_zone(db: Session, zone: Zone, payload: ZoneUpdate) -> dict:
     db.commit()
     db.refresh(zone)
     field = db.query(Field).filter(Field.id == zone.field_id).first()
-    return _zone_row_to_read_kwargs(zone, field.name if field else "")
+    last_run_at = _last_run_lookup(db, [zone.id]).get(zone.id)
+    return _zone_row_to_read_kwargs(zone, field.name if field else "", last_run_at)
 
 
 def archive_zone(db: Session, zone: Zone) -> dict:
@@ -147,4 +178,5 @@ def archive_zone(db: Session, zone: Zone) -> dict:
     db.commit()
     db.refresh(zone)
     field = db.query(Field).filter(Field.id == zone.field_id).first()
-    return _zone_row_to_read_kwargs(zone, field.name if field else "")
+    last_run_at = _last_run_lookup(db, [zone.id]).get(zone.id)
+    return _zone_row_to_read_kwargs(zone, field.name if field else "", last_run_at)

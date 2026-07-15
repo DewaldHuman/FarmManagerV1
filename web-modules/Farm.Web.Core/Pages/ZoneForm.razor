@@ -36,6 +36,9 @@
         <option value="none">@Localizer["ZoneForm_Irrigation_None"]</option>
     </select>
 
+    <label class="form-label" for="zone-interval">@Localizer["ZoneForm_IrrigationIntervalDays"]</label>
+    <input id="zone-interval" type="number" step="1" min="0" class="form-input" @bind="IrrigationIntervalDays" @bind:event="oninput" />
+
     @if (_showError)
     {
         <div class="form-error">@Localizer["ZoneForm_Error"]</div>
@@ -59,6 +62,7 @@
     private double AreaHa;
     private string? Crop;
     private string IrrigationSystemType = "none";
+    private int? IrrigationIntervalDays;
     private bool _saving;
     private bool _showError;
 
@@ -76,6 +80,7 @@
                 AreaHa = zone.AreaHa;
                 Crop = zone.Crop;
                 IrrigationSystemType = zone.IrrigationSystemType;
+                IrrigationIntervalDays = zone.IrrigationIntervalDays;
             }
         }
         else if (FieldId.HasValue)
@@ -94,8 +99,8 @@
         _showError = false;
 
         ZoneDto? result = IsEdit
-            ? await FarmService.UpdateZoneAsync(Id!.Value, new ZoneUpdateRequest(SelectedFieldId, Name, AreaHa, Crop, IrrigationSystemType))
-            : await FarmService.CreateZoneAsync(new ZoneCreateRequest(SelectedFieldId, Name, AreaHa, Crop, IrrigationSystemType));
+            ? await FarmService.UpdateZoneAsync(Id!.Value, new ZoneUpdateRequest(SelectedFieldId, Name, AreaHa, Crop, IrrigationSystemType, IrrigationIntervalDays))
+            : await FarmService.CreateZoneAsync(new ZoneCreateRequest(SelectedFieldId, Name, AreaHa, Crop, IrrigationSystemType, IrrigationIntervalDays));
 
         _saving = false;
 

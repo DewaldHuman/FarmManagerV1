@@ -85,6 +85,7 @@ class ZoneCreate(BaseModel):
     area_ha: float
     crop: str | None = None
     irrigation_system_type: IrrigationSystemType = IrrigationSystemType.NONE
+    irrigation_interval_days: int | None = None
 
 
 class ZoneUpdate(BaseModel):
@@ -93,6 +94,7 @@ class ZoneUpdate(BaseModel):
     area_ha: float | None = None
     crop: str | None = None
     irrigation_system_type: IrrigationSystemType | None = None
+    irrigation_interval_days: int | None = None
 
 
 class ZoneRead(BaseModel):
@@ -103,6 +105,7 @@ class ZoneRead(BaseModel):
     area_ha: float
     crop: str | None
     irrigation_system_type: IrrigationSystemType
+    irrigation_interval_days: int | None
     is_active: bool
     status: str
     created_at: datetime

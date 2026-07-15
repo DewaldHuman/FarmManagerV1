@@ -31,6 +31,7 @@ public record ZoneDto(
     [property: JsonPropertyName("area_ha")] double AreaHa,
     string? Crop,
     [property: JsonPropertyName("irrigation_system_type")] string IrrigationSystemType,
+    [property: JsonPropertyName("irrigation_interval_days")] int? IrrigationIntervalDays,
     [property: JsonPropertyName("is_active")] bool IsActive,
     string Status,
     [property: JsonPropertyName("created_at")] DateTimeOffset CreatedAt);
@@ -40,14 +41,16 @@ public record ZoneCreateRequest(
     string Name,
     [property: JsonPropertyName("area_ha")] double AreaHa,
     string? Crop,
-    [property: JsonPropertyName("irrigation_system_type")] string IrrigationSystemType);
+    [property: JsonPropertyName("irrigation_system_type")] string IrrigationSystemType,
+    [property: JsonPropertyName("irrigation_interval_days")] int? IrrigationIntervalDays);
 
 public record ZoneUpdateRequest(
     [property: JsonPropertyName("field_id")] Guid? FieldId,
     string? Name,
     [property: JsonPropertyName("area_ha")] double? AreaHa,
     string? Crop,
-    [property: JsonPropertyName("irrigation_system_type")] string? IrrigationSystemType);
+    [property: JsonPropertyName("irrigation_system_type")] string? IrrigationSystemType,
+    [property: JsonPropertyName("irrigation_interval_days")] int? IrrigationIntervalDays);
 
 public record SettingsDto(
     Guid Id,

@@ -294,6 +294,9 @@
   <data name="ZoneForm_IrrigationSystemType" xml:space="preserve">
     <value>Besproeiingstelsel</value>
   </data>
+  <data name="ZoneForm_IrrigationIntervalDays" xml:space="preserve">
+    <value>Water elke (dae, opsioneel)</value>
+  </data>
   <data name="ZoneForm_Irrigation_Drip" xml:space="preserve">
     <value>Drup</value>
   </data>

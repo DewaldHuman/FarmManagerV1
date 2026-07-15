@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -107,6 +107,10 @@ class Zone(CoreSchemaBase):
         nullable=False,
         default=IrrigationSystemType.NONE,
     )
+    # Manual "water every N days" target used to compute a real ZoneRead.status
+    # (on-schedule/due/overdue) against the zone's most recent CalculationRun.
+    # See Field.notes above re: Mapped[int] instead of Mapped[int | None] here.
+    irrigation_interval_days: Mapped[int] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False

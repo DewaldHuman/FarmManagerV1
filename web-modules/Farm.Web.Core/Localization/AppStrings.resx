@@ -294,6 +294,9 @@
   <data name="ZoneForm_IrrigationSystemType" xml:space="preserve">
     <value>Irrigation System</value>
   </data>
+  <data name="ZoneForm_IrrigationIntervalDays" xml:space="preserve">
+    <value>Water every (days, optional)</value>
+  </data>
   <data name="ZoneForm_Irrigation_Drip" xml:space="preserve">
     <value>Drip</value>
   </data>
