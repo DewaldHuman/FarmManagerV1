@@ -1,6 +1,8 @@
 @page "/irrigation/run-calculator"
 @layout AppShellLayout
 @using System.Globalization
+@inject IFarmService FarmService
+@inject IIrrigationService IrrigationService
 
 <div class="app-shell__eyebrow">Irrigation</div>
 <h1 class="app-shell__title calc-title">Run calculation</h1>
@@ -28,6 +30,24 @@
 else
 {
     <button class="calc-back-btn" @onclick="BackToPicker">← Choose a different calculator</button>
+
+    @if (_zoneName is not null)
+    {
+        <div style="margin-bottom: 12px;">Logging against: <strong>@_zoneName</strong></div>
+    }
+    else if (_zones.Count > 0)
+    {
+        <div style="margin-bottom: 12px;">
+            <label class="form-label">Zone to log against</label>
+            <select class="calc-select" @onchange="OnZoneSelected">
+                <option value="">— Select a zone —</option>
+                @foreach (var zone in _zones)
+                {
+                    <option value="@zone.Id">@zone.Name (@zone.FieldName)</option>
+                }
+            </select>
+        </div>
+    }
 
     <div class="calc-layout">
         <div>
@@ -95,7 +115,22 @@ else
                     </div>
                     @if (_result.CanLog)
                     {
-                        <button class="calc-log-btn" disabled title="Run logging arrives with the backend">Confirm &amp; Log Run</button>
+                        @if (_selectedZoneId is null)
+                        {
+                            <button class="calc-log-btn" disabled title="Choose a zone to log against">Confirm &amp; Log Run</button>
+                        }
+                        else
+                        {
+                            <button class="calc-log-btn" disabled="@_logging" @onclick="LogRun">Confirm &amp; Log Run</button>
+                            @if (_logSuccess == true)
+                            {
+                                <div style="color: #2e7d32; margin-top: 8px;">Logged ✓</div>
+                            }
+                            else if (_logSuccess == false)
+                            {
+                                <div class="calc-result-error">Couldn't log this run — check your connection and try again.</div>
+                            }
+                        }
                     }
                 }
                 else
@@ -119,7 +154,9 @@ else
 
     private sealed record ChoiceField(string Key, string Label, IReadOnlyList<Choice> Options) : Field(Key, Label);
 
-    private sealed record CalcResult(string Label, string Headline, IReadOnlyList<string> Details, bool CanLog = false);
+    private sealed record CalcResult(
+        string Label, string Headline, IReadOnlyList<string> Details, bool CanLog = false,
+        IReadOnlyDictionary<string, double>? RawOutputs = null);
 
     private sealed record Calculator(
         string Id, string Icon, string Title, string Desc,
@@ -130,17 +167,79 @@ else
 
     // ---- State -----------------------------------------------------------
 
+    [SupplyParameterFromQuery(Name = "zone")]
+    public Guid? ZoneId { get; set; }
+
     private Calculator? _selected;
     private CalcResult? _result;
     private string? _error;
     private readonly Dictionary<string, string> _inputs = new();
     private readonly Dictionary<string, int> _choiceIdx = new();
+    private Dictionary<string, double> _lastValues = new();
+
+    private string? _zoneName;
+    private List<ZoneDto> _zones = new();
+    private Guid? _selectedZoneId;
+    private bool _logging;
+    private bool? _logSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ZoneId is not null)
+        {
+            var zone = await FarmService.GetZoneAsync(ZoneId.Value);
+            if (zone is not null)
+            {
+                _selectedZoneId = zone.Id;
+                _zoneName = zone.Name;
+            }
+        }
+        else
+        {
+            _zones = await FarmService.ListZonesAsync();
+        }
+    }
+
+    private void OnZoneSelected(ChangeEventArgs e)
+    {
+        _selectedZoneId = Guid.TryParse(e.Value?.ToString(), out var id) ? id : null;
+    }
+
+    private async Task LogRun()
+    {
+        if (_result?.RawOutputs is null || _selectedZoneId is null || _selected is null)
+        {
+            return;
+        }
+
+        _logging = true;
+        _logSuccess = null;
+
+        try
+        {
+            await IrrigationService.LogCalculationRunAsync(
+                _selectedZoneId.Value,
+                _selected.Id,
+                new Dictionary<string, double>(_lastValues),
+                new Dictionary<string, double>(_result.RawOutputs));
+            _logSuccess = true;
+        }
+        catch (Exception)
+        {
+            _logSuccess = false;
+        }
+        finally
+        {
+            _logging = false;
+        }
+    }
 
     private void Select(Calculator calc)
     {
         _selected = calc;
         _result = null;
         _error = null;
+        _logSuccess = null;
         _inputs.Clear();
         _choiceIdx.Clear();
         foreach (var field in calc.Fields)
@@ -178,6 +277,7 @@ else
 
         _result = null;
         _error = null;
+        _logSuccess = null;
 
         var values = new Dictionary<string, double>();
         foreach (var field in _selected.Fields)
@@ -211,6 +311,7 @@ else
         try
         {
             _result = _selected.Compute(values);
+            _lastValues = values;
         }
         catch (Exception ex)
         {
@@ -322,7 +423,15 @@ else
                             $"{F0(r.VolumeLitres)} L · net requirement {F1(r.NetRequirementMm)} mm",
                             $"ETc {F2(r.CropWaterUseMmPerDay)} mm/day · gross {F1(r.GrossRequirementMm)} mm at {F0(v["eff"])}% efficiency",
                         },
-                        CanLog: true);
+                        CanLog: true,
+                        RawOutputs: new Dictionary<string, double>
+                        {
+                            ["crop_water_use_mm_per_day"] = r.CropWaterUseMmPerDay,
+                            ["net_requirement_mm"] = r.NetRequirementMm,
+                            ["gross_requirement_mm"] = r.GrossRequirementMm,
+                            ["volume_litres"] = r.VolumeLitres,
+                            ["run_time_minutes"] = r.RunTimeMinutes,
+                        });
                 }),
 
             new Calculator("crop-water-need", "🌾", "Crop Water Need",
@@ -356,7 +465,8 @@ else
                 {
                     var minutes = RunTimeCalculators.ManualVolumeRunTimeMinutes(v["volume"], v["flow"]);
                     return new CalcResult("Recommended run-time", $"{F0(minutes)} min",
-                        new[] { $"{F0(v["volume"])} L at {F1(v["flow"])} L/min" }, CanLog: true);
+                        new[] { $"{F0(v["volume"])} L at {F1(v["flow"])} L/min" }, CanLog: true,
+                        RawOutputs: new Dictionary<string, double> { ["run_time_minutes"] = minutes });
                 }),
 
             new Calculator("drip-emitter", "🌿", "Drip Emitter Run-Time",
@@ -376,7 +486,12 @@ else
                             $"{F0(v["count"])} emitters at {F1(v["perEmitter"])} L/hr",
                             $"Total zone flow {F1(r.TotalFlowLitresPerHour)} L/hr",
                         },
-                        CanLog: true);
+                        CanLog: true,
+                        RawOutputs: new Dictionary<string, double>
+                        {
+                            ["total_flow_litres_per_hour"] = r.TotalFlowLitresPerHour,
+                            ["run_time_minutes"] = r.RunTimeMinutes,
+                        });
                 }),
 
             new Calculator("set-time", "⏱️", "Set Time for Depth",
@@ -391,7 +506,8 @@ else
                 {
                     var r = RunTimeCalculators.SetTimeForDepth(v["depth"], v["area"], v["flow"]);
                     return new CalcResult("Set time", $"{F1(r.Hours)} h",
-                        new[] { $"{F0(r.Minutes)} minutes to apply {F1(v["depth"])} mm over {F2(v["area"])} ha" }, CanLog: true);
+                        new[] { $"{F0(r.Minutes)} minutes to apply {F1(v["depth"])} mm over {F2(v["area"])} ha" }, CanLog: true,
+                        RawOutputs: new Dictionary<string, double> { ["hours"] = r.Hours, ["minutes"] = r.Minutes });
                 }),
 
             new Calculator("sprinkler-usage", "🌧️", "Sprinkler Water Usage",

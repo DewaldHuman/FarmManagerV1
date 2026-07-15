@@ -41,6 +41,16 @@ builder.Services.AddHttpClient<Farm.Web.Core.Registry.IFarmService, Farm.Web.Cor
     client.BaseAddress = new Uri(apiBaseUrl);
 }).AddHttpMessageHandler<AuthTokenHandler>();
 
+// Irrigation calculation-run logging — lives in Farm.Web.Core (not the
+// lazy-loaded Farm.Web.Irrigation) because Program.cs runs eagerly at startup;
+// referencing a type from a lazy-loaded assembly here would force it to load
+// before its .wasm is fetched, breaking lazy loading entirely (confirmed by
+// hitting exactly this "Could not load file or assembly" error in testing).
+builder.Services.AddHttpClient<Farm.Web.Core.Irrigation.IIrrigationService, Farm.Web.Core.Irrigation.IrrigationService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+}).AddHttpMessageHandler<AuthTokenHandler>();
+
 var host = builder.Build();
 
 // Must run after Build() (so IJSRuntime is resolvable) but before RunAsync()

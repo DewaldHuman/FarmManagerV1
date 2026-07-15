@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.config import settings
 from app.db import Base
 from app.core import models as core_models  # noqa: F401  (registers core tables)
+from app.irrigation import models as irrigation_models  # noqa: F401  (registers irrigation tables)
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

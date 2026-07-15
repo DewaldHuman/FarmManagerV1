@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.router import router as core_router
+from app.irrigation.router import router as irrigation_router
 
 app = FastAPI(title="Farm Platform API")
 
@@ -18,3 +19,4 @@ app.add_middleware(
 )
 
 app.include_router(core_router)
+app.include_router(irrigation_router)
