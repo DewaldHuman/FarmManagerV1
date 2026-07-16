@@ -87,8 +87,9 @@ else
                            @onmousedown="() => BeginDrag(pipe)" @onmousedown:preventDefault="true">
                             <polyline points="@points" fill="none" stroke="transparent" stroke-width="14" vector-effect="non-scaling-stroke" />
                             <polyline points="@points" fill="none"
-                                      stroke="@(ReferenceEquals(_selected, pipe) ? "#e07b26" : (pipe.IsMain ? "#2c6330" : "#4c8a50"))"
+                                      stroke="@(ReferenceEquals(_selected, pipe) ? "#e07b26" : _disconnectedLateralIds.Contains(pipe.Id) ? "#d97706" : (pipe.IsMain ? "#2c6330" : "#4c8a50"))"
                                       stroke-width="@(pipe.IsMain ? 6 : 4)" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-dasharray="@(_disconnectedLateralIds.Contains(pipe.Id) ? "8 5" : null)"
                                       vector-effect="non-scaling-stroke" />
                         </g>
                     }
@@ -111,7 +112,7 @@ else
                            @onmousedown="() => BeginDrag(sprinkler)" @onmousedown:preventDefault="true">
                             <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="1.6" fill="transparent" />
                             <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="0.6"
-                                    fill="@(ReferenceEquals(_selected, sprinkler) ? "#e07b26" : "#2c6330")" />
+                                    fill="@(ReferenceEquals(_selected, sprinkler) ? "#e07b26" : _farSprinklerIds.Contains(sprinkler.Id) ? "#d97706" : "#2c6330")" />
                         </g>
                     }
 
@@ -206,18 +207,28 @@ else
                 </select>
             </label>
 
+            @if (_warnings.Count > 0)
+            {
+                <div class="zone-designer-warnings">
+                    @foreach (var warning in _warnings)
+                    {
+                        <div class="zone-designer-warnings__item">⚠ @warning</div>
+                    }
+                </div>
+            }
+
             <div class="zone-designer-section">Design inputs</div>
             @foreach (var input in _inputRows)
             {
-                var fromCanvas = input.IsCount && _design.Sprinklers.Count > 0;
+                (bool Disabled, string? Note) status = input.Status?.Invoke() ?? (false, null);
                 <div class="zone-designer-input">
                     <label>@input.Label</label>
                     <span>
                         <input type="number" class="zone-designer-input__field" step="any"
-                               disabled="@fromCanvas"
-                               value="@(fromCanvas ? _design.Sprinklers.Count.ToString(CultureInfo.InvariantCulture) : S(input.Get()))"
+                               disabled="@status.Disabled"
+                               value="@(input.IsCount && status.Disabled ? _design.Sprinklers.Count.ToString(CultureInfo.InvariantCulture) : S(input.Get()))"
                                @onchange="e => OnInputChanged(input, e)" />
-                        <span class="zone-designer-input__unit">@(fromCanvas ? "from canvas" : input.Unit)</span>
+                        <span class="zone-designer-input__unit">@(status.Note ?? input.Unit)</span>
                     </span>
                 </div>
             }
@@ -311,7 +322,11 @@ else
 
     private DesignResults? _results;
 
-    private sealed record InputRow(string Label, string Unit, Func<double> Get, Action<double> Set, bool IsCount = false);
+    // Status lets a global input reflect per-element overrides on the canvas:
+    // disabled with a note when fully taken over, a "k of n custom" note when partial.
+    private sealed record InputRow(
+        string Label, string Unit, Func<double> Get, Action<double> Set,
+        bool IsCount = false, Func<(bool Disabled, string? Note)>? Status = null);
 
     private List<InputRow> _inputRows = new();
 
@@ -324,16 +339,32 @@ else
         }
 
         var inputs = _design.Inputs;
+
+        (bool Disabled, string? Note) GroupStatus(int overridden, int total) =>
+            total == 0 || overridden == 0 ? (false, null)
+            : overridden == total ? (true, "set on canvas")
+            : (false, $"{overridden} of {total} custom");
+
         _inputRows = new List<InputRow>
         {
-            new("Pump flow", "L/min", () => inputs.PumpFlowLitresPerMinute, v => inputs.PumpFlowLitresPerMinute = v),
-            new("Pump pressure", "bar", () => inputs.PumpPressureBar, v => inputs.PumpPressureBar = v),
-            new("Main pipe diameter", "mm", () => inputs.MainDiameterMm, v => inputs.MainDiameterMm = v),
-            new("Lateral pipe diameter", "mm", () => inputs.LateralDiameterMm, v => inputs.LateralDiameterMm = v),
-            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v, IsCount: true),
-            new("Sprinkler flow (each)", "L/hr", () => inputs.SprinklerFlowLitresPerHour, v => inputs.SprinklerFlowLitresPerHour = v),
+            new("Pump flow", "L/min", () => inputs.PumpFlowLitresPerMinute, v => inputs.PumpFlowLitresPerMinute = v,
+                Status: () => _design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump)?.RatedFlowLitresPerMinute is not null
+                    ? (true, "set on pump") : (false, null)),
+            new("Pump pressure", "bar", () => inputs.PumpPressureBar, v => inputs.PumpPressureBar = v,
+                Status: () => _design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump)?.RatedPressureBar is not null
+                    ? (true, "set on pump") : (false, null)),
+            new("Main pipe diameter", "mm", () => inputs.MainDiameterMm, v => inputs.MainDiameterMm = v,
+                Status: () => _design.Pipes.FirstOrDefault(p => p.IsMain)?.DiameterMm is not null
+                    ? (true, "set on canvas") : (false, null)),
+            new("Lateral pipe diameter", "mm", () => inputs.LateralDiameterMm, v => inputs.LateralDiameterMm = v,
+                Status: () => GroupStatus(_design.Pipes.Count(p => !p.IsMain && p.DiameterMm is not null), _design.Pipes.Count(p => !p.IsMain))),
+            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v, IsCount: true,
+                Status: () => _design.Sprinklers.Count > 0 ? (true, "from canvas") : (false, null)),
+            new("Sprinkler flow (each)", "L/hr", () => inputs.SprinklerFlowLitresPerHour, v => inputs.SprinklerFlowLitresPerHour = v,
+                Status: () => GroupStatus(_design.Sprinklers.Count(s => s.FlowLitresPerHour is not null), _design.Sprinklers.Count)),
             new("Sprinkler spacing", "m", () => inputs.SprinklerSpacingMetres, v => inputs.SprinklerSpacingMetres = v),
-            new("Sprinkler radius", "m", () => inputs.SprinklerRadiusMetres, v => inputs.SprinklerRadiusMetres = v),
+            new("Sprinkler radius", "m", () => inputs.SprinklerRadiusMetres, v => inputs.SprinklerRadiusMetres = v,
+                Status: () => GroupStatus(_design.Sprinklers.Count(s => s.RadiusMetres is not null), _design.Sprinklers.Count)),
             new("Target depth", "mm", () => inputs.TargetDepthMm, v => inputs.TargetDepthMm = v),
         };
 
@@ -608,13 +639,19 @@ else
             {
                 if (!pipe.IsMain && _lateralStats.TryGetValue(pipe.Id, out var stats))
                 {
-                    return new()
+                    var rows = new List<(string, string)>
                     {
                         ("Length", $"{F1(pipe.LengthMetres)} m"),
                         ("Sprinklers", stats.SprinklerCount.ToString()),
                         ("Flow", $"{F1(stats.FlowLitresPerMinute)} L/min"),
                         ("Velocity", $"{F2(stats.Velocity)} m/s"),
                     };
+                    if (_disconnectedLateralIds.Contains(pipe.Id))
+                    {
+                        rows.Insert(0, ("Connected", "No — carries no flow"));
+                    }
+
+                    return rows;
                 }
 
                 var flow = pipe.IsMain ? _results?.DemandFlowLitresPerMinute : _results?.LateralFlowLitresPerMinute;
@@ -645,7 +682,7 @@ else
 
     // ---- Per-element property overrides (null = inherit the design input) ----
 
-    private sealed record EditableProp(string Label, string Unit, Func<double> Get, Action<double> Set);
+    private sealed record EditableProp(string Label, string Unit, Func<double> Get, Action<double> Set, Action Clear);
 
     private List<EditableProp> SelectedEditableProps()
     {
@@ -654,17 +691,17 @@ else
         {
             DesignSprinkler s => new()
             {
-                new("Flow", "L/hr", () => s.FlowLitresPerHour ?? i.SprinklerFlowLitresPerHour, v => s.FlowLitresPerHour = v),
-                new("Radius", "m", () => s.RadiusMetres ?? i.SprinklerRadiusMetres, v => s.RadiusMetres = v),
+                new("Flow", "L/hr", () => s.FlowLitresPerHour ?? i.SprinklerFlowLitresPerHour, v => s.FlowLitresPerHour = v, () => s.FlowLitresPerHour = null),
+                new("Radius", "m", () => s.RadiusMetres ?? i.SprinklerRadiusMetres, v => s.RadiusMetres = v, () => s.RadiusMetres = null),
             },
             DesignPipe p => new()
             {
-                new("Diameter", "mm", () => p.DiameterMm ?? (p.IsMain ? i.MainDiameterMm : i.LateralDiameterMm), v => p.DiameterMm = v),
+                new("Diameter", "mm", () => p.DiameterMm ?? (p.IsMain ? i.MainDiameterMm : i.LateralDiameterMm), v => p.DiameterMm = v, () => p.DiameterMm = null),
             },
             DesignPoint pt when pt.Kind == DesignPointKind.Pump => new()
             {
-                new("Rated flow", "L/min", () => pt.RatedFlowLitresPerMinute ?? i.PumpFlowLitresPerMinute, v => pt.RatedFlowLitresPerMinute = v),
-                new("Rated pressure", "bar", () => pt.RatedPressureBar ?? i.PumpPressureBar, v => pt.RatedPressureBar = v),
+                new("Rated flow", "L/min", () => pt.RatedFlowLitresPerMinute ?? i.PumpFlowLitresPerMinute, v => pt.RatedFlowLitresPerMinute = v, () => pt.RatedFlowLitresPerMinute = null),
+                new("Rated pressure", "bar", () => pt.RatedPressureBar ?? i.PumpPressureBar, v => pt.RatedPressureBar = v, () => pt.RatedPressureBar = null),
             },
             _ => new(),
         };
@@ -675,8 +712,15 @@ else
         if (double.TryParse(e.Value as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && value > 0)
         {
             prop.Set(value);
-            await SaveDesignAsync();
         }
+        else
+        {
+            // Invalid or non-positive entry clears the override — the re-render
+            // snaps the field back to the inherited design-input value.
+            prop.Clear();
+        }
+
+        await SaveDesignAsync();
     }
 
     private bool SelectedHasOverrides() => _selected switch
@@ -736,9 +780,21 @@ else
     private const double SprinklerHeadPressureBar = 2.0;
     private const int AssumedLateralCount = 3; // matches the demo layout when nothing is drawn
 
+    // Connectivity tolerances (grid is 1 m): a lateral counts as plumbed into the
+    // main within one cell; a sprinkler counts as sitting on its lateral within two.
+    private const double LateralConnectToleranceM = 1.0;
+    private const double SprinklerOnLateralToleranceM = 2.0;
+
+    private readonly List<string> _warnings = new();
+    private readonly HashSet<Guid> _disconnectedLateralIds = new();
+    private readonly HashSet<Guid> _farSprinklerIds = new();
+
     private void Recompute()
     {
         _lateralStats.Clear();
+        _warnings.Clear();
+        _disconnectedLateralIds.Clear();
+        _farSprinklerIds.Clear();
         var i = _design.Inputs;
 
         // Sprinklers placed on the canvas take precedence over the count input;
@@ -775,6 +831,32 @@ else
         var laterals = _design.Pipes.Where(p => !p.IsMain).ToList();
         var lateralCountAssumed = laterals.Count == 0;
 
+        // Connectivity: geometric assignment isn't plumbing, so at least flag
+        // laterals that don't touch the main and sprinklers far from their lateral.
+        var connectedLaterals = mainPipe is null
+            ? new List<DesignPipe>()
+            : laterals.Where(l => l.DistanceToPipe(mainPipe) <= LateralConnectToleranceM).ToList();
+        if (laterals.Count > 0)
+        {
+            foreach (var lateral in laterals.Where(l => !connectedLaterals.Contains(l)))
+            {
+                _disconnectedLateralIds.Add(lateral.Id);
+            }
+
+            if (mainPipe is null)
+            {
+                _warnings.Add("No main pipe — lateral connections can't be checked.");
+            }
+            else if (connectedLaterals.Count == 0)
+            {
+                _warnings.Add("None of the laterals connect to the main pipe — flows shown assume they do; check the layout.");
+            }
+            else if (_disconnectedLateralIds.Count > 0)
+            {
+                _warnings.Add($"{_disconnectedLateralIds.Count} lateral(s) are not connected to the main pipe — they carry no flow.");
+            }
+        }
+
         double lateralLmin;
         double lateralVelocity;
         var lateralFrictionKpa = 0.0;
@@ -789,13 +871,26 @@ else
         }
         else if (countFromCanvas)
         {
+            // Sprinklers route only to laterals plumbed into the main; if none are
+            // connected, fall back to nearest-any so results never vanish (warned above).
+            var routable = connectedLaterals.Count > 0 ? connectedLaterals : laterals;
+
             var assignedCounts = laterals.ToDictionary(p => p.Id, _ => 0);
             var assignedFlowsLhr = laterals.ToDictionary(p => p.Id, _ => 0.0);
             foreach (var sprinkler in _design.Sprinklers)
             {
-                var nearest = laterals.MinBy(p => p.DistanceToPoint(sprinkler.X, sprinkler.Y))!;
+                var nearest = routable.MinBy(p => p.DistanceToPoint(sprinkler.X, sprinkler.Y))!;
                 assignedCounts[nearest.Id]++;
                 assignedFlowsLhr[nearest.Id] += SprinklerFlowLhr(sprinkler);
+                if (nearest.DistanceToPoint(sprinkler.X, sprinkler.Y) > SprinklerOnLateralToleranceM)
+                {
+                    _farSprinklerIds.Add(sprinkler.Id);
+                }
+            }
+
+            if (_farSprinklerIds.Count > 0)
+            {
+                _warnings.Add($"{_farSprinklerIds.Count} sprinkler(s) are more than {F0(SprinklerOnLateralToleranceM)} m from their lateral.");
             }
 
             foreach (var lateral in laterals)
@@ -874,7 +969,11 @@ else
             lateralVelocity,
             frictionBar,
             frictionBar + SprinklerHeadPressureBar,
-            ZoneDesignCalculators.CoverageRatio(i.SprinklerRadiusMetres, i.SprinklerSpacingMetres),
+            ZoneDesignCalculators.CoverageRatio(
+                countFromCanvas
+                    ? _design.Sprinklers.Average(s => s.RadiusMetres ?? i.SprinklerRadiusMetres)
+                    : i.SprinklerRadiusMetres,
+                i.SprinklerSpacingMetres),
             applicationRate,
             ZoneDesignCalculators.RunTimeMinutesForDepth(i.TargetDepthMm, applicationRate),
             ZoneDesignCalculators.MaxSprinklersForPumpFlow(pumpFlowLmin, i.SprinklerFlowLitresPerHour),

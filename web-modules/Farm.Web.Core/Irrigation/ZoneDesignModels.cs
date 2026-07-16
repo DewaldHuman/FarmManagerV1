@@ -42,6 +42,27 @@ public class DesignPipe
         }
     }
 
+    /// <summary>
+    /// Approximate shortest distance between two pipes' polylines (metres):
+    /// min of each pipe's vertices against the other's segments. Exact for the
+    /// designer's axis-aligned runs that meet at endpoints or T into a segment.
+    /// </summary>
+    public double DistanceToPipe(DesignPipe other)
+    {
+        var best = double.MaxValue;
+        foreach (var v in Vertices)
+        {
+            best = Math.Min(best, other.DistanceToPoint(v.X, v.Y));
+        }
+
+        foreach (var v in other.Vertices)
+        {
+            best = Math.Min(best, DistanceToPoint(v.X, v.Y));
+        }
+
+        return best;
+    }
+
     /// <summary>Shortest distance from a point to this pipe's polyline (metres).</summary>
     public double DistanceToPoint(double x, double y)
     {
