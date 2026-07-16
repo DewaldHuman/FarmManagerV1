@@ -410,7 +410,10 @@
     <value>Nie begin nie</value>
   </data>
   <data name="ZoneOverview_IrrigationDesign_Placeholder" xml:space="preserve">
-    <value>Nog geen besproeiingsuitleg nie &#8212; gebruik "Doen berekeninge" om pype te teken, 'n pomp en sproeiers by te voeg.</value>
+    <value>Maak die sone-ontwerper oop om pype te teken en jou pomp, sproeiers en kleppe te plaas.</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign_Saved" xml:space="preserve">
+    <value>Ontwerp gestoor</value>
   </data>
   <data name="ZoneOverview_History" xml:space="preserve">
     <value>Verslae en geskiedenis</value>

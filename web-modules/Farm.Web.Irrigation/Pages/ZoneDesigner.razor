@@ -1,0 +1,654 @@
+@page "/irrigation/zones/{Id:guid}/design"
+@layout AppShellLayout
+@attribute [Authorize]
+@using System.Globalization
+@inject IFarmService FarmService
+@inject IZoneDesignStore DesignStore
+@inject NavigationManager Nav
+
+@* Unlocalized by module-wide convention (see RunCalculator.razor / CLAUDE.md). *@
+
+<button class="calc-back-btn" @onclick="GoBack">← Back to zone overview</button>
+
+@if (_loading)
+{
+    <p>Loading…</p>
+}
+else if (_zone is null)
+{
+    <p class="page-subtitle">Zone not found.</p>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <div class="app-shell__eyebrow">Zone design</div>
+            <h1 class="app-shell__title">@_zone.Name</h1>
+        </div>
+        <div class="zone-designer-size">
+            <label>Width (m)
+                <input type="number" class="form-input zone-designer-size__input" min="10" step="1"
+                       @bind="_design.WidthMetres" @bind:after="SaveDesignAsync" />
+            </label>
+            <label>Height (m)
+                <input type="number" class="form-input zone-designer-size__input" min="10" step="1"
+                       @bind="_design.HeightMetres" @bind:after="SaveDesignAsync" />
+            </label>
+        </div>
+    </div>
+
+    <div class="zone-designer-layout">
+        <div>
+            <div class="zone-designer-toolbar">
+                <button class="zone-designer-tool @(ToolClass(Tool.Select))" @onclick="() => SetTool(Tool.Select)">↖ Select</button>
+                <button class="zone-designer-tool @(ToolClass(Tool.Pipe))" @onclick="() => SetTool(Tool.Pipe)">— Draw pipe</button>
+                <button class="zone-designer-tool @(ToolClass(Tool.Pump))" @onclick="() => SetTool(Tool.Pump)">⚙ Pump</button>
+                <button class="zone-designer-tool @(ToolClass(Tool.Sprinkler))" @onclick="() => SetTool(Tool.Sprinkler)">✳ Sprinkler</button>
+                <button class="zone-designer-tool @(ToolClass(Tool.Valve))" @onclick="() => SetTool(Tool.Valve)">◆ Valve</button>
+                <button class="zone-designer-tool @(ToolClass(Tool.Source))" @onclick="() => SetTool(Tool.Source)">💧 Water source</button>
+            </div>
+
+            @if (_tool == Tool.Pipe)
+            {
+                <div class="zone-designer-hint">Click to place pipe points (horizontal/vertical runs, snapped to 1 m) — double-click to finish the pipe.</div>
+            }
+
+            <div class="zone-designer-canvas-wrap">
+                <svg class="zone-designer-canvas"
+                     width="@Px(_design.WidthMetres)" height="@Px(_design.HeightMetres)"
+                     viewBox="0 0 @(S(_design.WidthMetres)) @(S(_design.HeightMetres))"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="designGrid" width="5" height="5" patternUnits="userSpaceOnUse">
+                            <path d="M 5 0 L 0 0 0 5" fill="none" stroke="#dcd8c8" stroke-width="0.12" />
+                        </pattern>
+                    </defs>
+
+                    @* Background: fill + grid + border; the fill layer is the placement/deselect click target. *@
+                    <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
+                          fill="#f4f2ea" @onclick="OnCanvasClick" @ondblclick="OnCanvasDoubleClick" />
+                    <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
+                          fill="url(#designGrid)" pointer-events="none" />
+                    <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
+                          fill="none" stroke="#2c6330" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none" />
+
+                    @* Sprinkler coverage circles render behind everything else. *@
+                    @foreach (var sprinkler in _design.Sprinklers)
+                    {
+                        <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="@S(_design.Inputs.SprinklerRadiusMetres)"
+                                fill="#2c6330" fill-opacity="0.06" stroke="#7ba57e" stroke-width="1"
+                                stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none" />
+                    }
+
+                    @foreach (var pipe in _design.Pipes)
+                    {
+                        var points = string.Join(" ", pipe.Vertices.Select(v => $"{S(v.X)},{S(v.Y)}"));
+                        <g @onclick="() => SelectElement(pipe)" @onclick:stopPropagation="true">
+                            <polyline points="@points" fill="none" stroke="transparent" stroke-width="14" vector-effect="non-scaling-stroke" />
+                            <polyline points="@points" fill="none"
+                                      stroke="@(ReferenceEquals(_selected, pipe) ? "#e07b26" : (pipe.IsMain ? "#2c6330" : "#4c8a50"))"
+                                      stroke-width="@(pipe.IsMain ? 6 : 4)" stroke-linecap="round" stroke-linejoin="round"
+                                      vector-effect="non-scaling-stroke" />
+                        </g>
+                    }
+
+                    @if (_drawingPipe is not null && _drawingPipe.Vertices.Count > 0)
+                    {
+                        var points = string.Join(" ", _drawingPipe.Vertices.Select(v => $"{S(v.X)},{S(v.Y)}"));
+                        <polyline points="@points" fill="none" stroke="#e07b26" stroke-width="4"
+                                  stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round"
+                                  vector-effect="non-scaling-stroke" pointer-events="none" />
+                        @foreach (var v in _drawingPipe.Vertices)
+                        {
+                            <circle cx="@S(v.X)" cy="@S(v.Y)" r="0.6" fill="#e07b26" pointer-events="none" />
+                        }
+                    }
+
+                    @foreach (var sprinkler in _design.Sprinklers)
+                    {
+                        <g @onclick="() => SelectElement(sprinkler)" @onclick:stopPropagation="true">
+                            <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="1.6" fill="transparent" />
+                            <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="0.6"
+                                    fill="@(ReferenceEquals(_selected, sprinkler) ? "#e07b26" : "#2c6330")" />
+                        </g>
+                    }
+
+                    @foreach (var point in _design.Points)
+                    {
+                        <g @onclick="() => SelectElement(point)" @onclick:stopPropagation="true">
+                            <circle cx="@S(point.X)" cy="@S(point.Y)" r="2.2" fill="transparent" />
+                            @if (point.Kind == DesignPointKind.Pump)
+                            {
+                                <rect x="@S(point.X - 1.2)" y="@S(point.Y - 1.2)" width="2.4" height="2.4" rx="0.5"
+                                      fill="@(ReferenceEquals(_selected, point) ? "#e07b26" : "#18361a")" />
+                            }
+                            else if (point.Kind == DesignPointKind.WaterSource)
+                            {
+                                <circle cx="@S(point.X)" cy="@S(point.Y)" r="1.2"
+                                        fill="@(ReferenceEquals(_selected, point) ? "#e07b26" : "#2b6cb0")" />
+                            }
+                            else
+                            {
+                                <rect x="@S(point.X - 0.9)" y="@S(point.Y - 0.9)" width="1.8" height="1.8"
+                                      transform="rotate(45 @S(point.X) @S(point.Y))"
+                                      fill="@(ReferenceEquals(_selected, point) ? "#e07b26" : "#6e4d32")" />
+                            }
+                        </g>
+                    }
+                </svg>
+
+                @if (_design.IsEmpty && _drawingPipe is null)
+                {
+                    <div class="zone-designer-empty">
+                        No layout yet — use the toolbar to draw pipes and place your pump, sprinklers and valves.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="zone-designer-panel">
+            @if (_selected is not null)
+            {
+                <div class="card zone-designer-inspector">
+                    <div class="zone-designer-inspector__header">
+                        <span class="zone-designer-inspector__title">@SelectedTitle()</span>
+                        <button class="zone-designer-inspector__close" title="Clear selection" @onclick="ClearSelection">✕</button>
+                    </div>
+                    @foreach (var (label, value) in SelectedSpecs())
+                    {
+                        <div class="zone-designer-inspector__row">
+                            <span>@label</span>
+                            <strong>@value</strong>
+                        </div>
+                    }
+                    <button class="btn btn-secondary zone-designer-inspector__remove" @onclick="RemoveSelectedAsync">Remove</button>
+                </div>
+            }
+
+            <div class="zone-designer-solver">
+                <div class="zone-designer-solver__label">@SolverLabel()</div>
+                <div class="zone-designer-solver__value">@SolverValue()</div>
+                <div class="zone-designer-solver__note">@SolverNote()</div>
+            </div>
+
+            <label class="zone-designer-solve-for">Solve for
+                <select class="calc-select" @bind="_solveMode">
+                    <option value="@SolveMode.Runtime">Runtime (from target depth)</option>
+                    <option value="@SolveMode.PumpFlow">Required pump flow</option>
+                    <option value="@SolveMode.MaxSprinklers">Max sprinklers this pump supports</option>
+                </select>
+            </label>
+
+            <div class="zone-designer-section">Design inputs</div>
+            @foreach (var input in _inputRows)
+            {
+                <div class="zone-designer-input">
+                    <label>@input.Label</label>
+                    <span>
+                        <input type="number" class="form-input zone-designer-input__field" step="any"
+                               value="@S(input.Get())"
+                               @onchange="e => OnInputChanged(input, e)" />
+                        <span class="zone-designer-input__unit">@input.Unit</span>
+                    </span>
+                </div>
+            }
+
+            <div class="zone-designer-section">Results</div>
+            @if (_results is null)
+            {
+                <p class="zone-designer-result__sub">Enter valid (positive) design inputs to see results.</p>
+            }
+            else
+            {
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Total demand flow</div>
+                        <div class="zone-designer-result__sub">@_design.Inputs.SprinklerCount sprinklers × @F0(_design.Inputs.SprinklerFlowLitresPerHour) L/hr</div>
+                    </div>
+                    <strong>@F0(_results.DemandFlowLitresPerMinute) L/min</strong>
+                </div>
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Main pipe velocity</div>
+                        <div class="zone-designer-result__sub">@VelocityNote(_results.MainVelocity)</div>
+                    </div>
+                    <strong>@F2(_results.MainVelocity) m/s</strong>
+                </div>
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Lateral pipe velocity</div>
+                        <div class="zone-designer-result__sub">@VelocityNote(_results.LateralVelocity)@(_results.LateralCountAssumed ? " · assumes 3 laterals (none drawn)" : "")</div>
+                    </div>
+                    <strong>@F2(_results.LateralVelocity) m/s</strong>
+                </div>
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Friction loss (main + lateral)</div>
+                        <div class="zone-designer-result__sub">Hazen-Williams estimate, C=150</div>
+                    </div>
+                    <strong>@F2(_results.FrictionLossBar) bar</strong>
+                </div>
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Required pump pressure</div>
+                        <div class="zone-designer-result__sub">incl. 2.0 bar at sprinkler head</div>
+                    </div>
+                    <strong>@F1(_results.RequiredPumpPressureBar) bar</strong>
+                </div>
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Sprinkler coverage</div>
+                        <div class="zone-designer-result__sub">@CoverageNote(_results.CoverageRatio)</div>
+                    </div>
+                    <strong>@F2(_results.CoverageRatio)× radius/spacing</strong>
+                </div>
+                <div class="zone-designer-result">
+                    <div>
+                        <div>Application rate</div>
+                        <div class="zone-designer-result__sub">from spacing @F0(_design.Inputs.SprinklerSpacingMetres)m</div>
+                    </div>
+                    <strong>@F1(_results.ApplicationRateMmPerHour) mm/hr</strong>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private const double PxPerMetre = 9;
+
+    private enum Tool { Select, Pipe, Pump, Sprinkler, Valve, Source }
+
+    private enum SolveMode { Runtime, PumpFlow, MaxSprinklers }
+
+    private ZoneDto? _zone;
+    private ZoneDesign _design = new();
+    private bool _loading = true;
+
+    private Tool _tool = Tool.Select;
+    private SolveMode _solveMode = SolveMode.Runtime;
+    private DesignPipe? _drawingPipe;
+    private object? _selected;
+
+    private DesignResults? _results;
+
+    private sealed record InputRow(string Label, string Unit, Func<double> Get, Action<double> Set);
+
+    private List<InputRow> _inputRows = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _zone = await FarmService.GetZoneAsync(Id);
+        if (_zone is not null)
+        {
+            _design = await DesignStore.GetAsync(Id) ?? new ZoneDesign();
+        }
+
+        var inputs = _design.Inputs;
+        _inputRows = new List<InputRow>
+        {
+            new("Pump flow", "L/min", () => inputs.PumpFlowLitresPerMinute, v => inputs.PumpFlowLitresPerMinute = v),
+            new("Pump pressure", "bar", () => inputs.PumpPressureBar, v => inputs.PumpPressureBar = v),
+            new("Main pipe diameter", "mm", () => inputs.MainDiameterMm, v => inputs.MainDiameterMm = v),
+            new("Lateral pipe diameter", "mm", () => inputs.LateralDiameterMm, v => inputs.LateralDiameterMm = v),
+            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v),
+            new("Sprinkler flow (each)", "L/hr", () => inputs.SprinklerFlowLitresPerHour, v => inputs.SprinklerFlowLitresPerHour = v),
+            new("Sprinkler spacing", "m", () => inputs.SprinklerSpacingMetres, v => inputs.SprinklerSpacingMetres = v),
+            new("Sprinkler radius", "m", () => inputs.SprinklerRadiusMetres, v => inputs.SprinklerRadiusMetres = v),
+            new("Target depth", "mm", () => inputs.TargetDepthMm, v => inputs.TargetDepthMm = v),
+        };
+
+        Recompute();
+        _loading = false;
+    }
+
+    private void GoBack() => Nav.NavigateTo($"/irrigation/zones/{Id}");
+
+    private async Task OnInputChanged(InputRow input, ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+        {
+            input.Set(value);
+            await SaveDesignAsync();
+        }
+    }
+
+    // ---- Tools & canvas ----
+
+    private string ToolClass(Tool tool) => _tool == tool ? "zone-designer-tool--active" : "";
+
+    private async Task SetTool(Tool tool)
+    {
+        if (_tool == Tool.Pipe && tool != Tool.Pipe)
+        {
+            await FinishPipeAsync();
+        }
+
+        _tool = tool;
+    }
+
+    private static string Px(double metres) => (metres * PxPerMetre).ToString("0", CultureInfo.InvariantCulture);
+
+    private static string S(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private (double X, double Y) SnapFromClick(MouseEventArgs e)
+    {
+        var x = Math.Clamp(Math.Round(e.OffsetX / PxPerMetre), 0, _design.WidthMetres);
+        var y = Math.Clamp(Math.Round(e.OffsetY / PxPerMetre), 0, _design.HeightMetres);
+        return (x, y);
+    }
+
+    private async Task OnCanvasClick(MouseEventArgs e)
+    {
+        var (x, y) = SnapFromClick(e);
+        switch (_tool)
+        {
+            case Tool.Select:
+                _selected = null;
+                break;
+            case Tool.Pipe:
+                AddPipeVertex(x, y);
+                break;
+            case Tool.Pump:
+                await AddPointAsync(DesignPointKind.Pump, x, y);
+                break;
+            case Tool.Sprinkler:
+                _design.Sprinklers.Add(new DesignSprinkler { X = x, Y = y });
+                await SaveDesignAsync();
+                break;
+            case Tool.Valve:
+                await AddPointAsync(DesignPointKind.Valve, x, y);
+                break;
+            case Tool.Source:
+                await AddPointAsync(DesignPointKind.WaterSource, x, y);
+                break;
+        }
+    }
+
+    private async Task OnCanvasDoubleClick(MouseEventArgs e)
+    {
+        if (_tool == Tool.Pipe)
+        {
+            await FinishPipeAsync();
+        }
+    }
+
+    private void AddPipeVertex(double x, double y)
+    {
+        _drawingPipe ??= new DesignPipe();
+        if (_drawingPipe.Vertices.Count > 0)
+        {
+            // Straight/90° segments only: constrain to the dominant axis.
+            var last = _drawingPipe.Vertices[^1];
+            if (Math.Abs(x - last.X) >= Math.Abs(y - last.Y))
+            {
+                y = last.Y;
+            }
+            else
+            {
+                x = last.X;
+            }
+
+            if (x == last.X && y == last.Y)
+            {
+                return; // duplicate click (the first half of a double-click lands here too)
+            }
+        }
+
+        _drawingPipe.Vertices.Add(new DesignVertex { X = x, Y = y });
+    }
+
+    private async Task FinishPipeAsync()
+    {
+        if (_drawingPipe is not null && _drawingPipe.Vertices.Count >= 2)
+        {
+            // First pipe drawn becomes the main line; later pipes are laterals.
+            _drawingPipe.IsMain = !_design.Pipes.Any(p => p.IsMain);
+            _design.Pipes.Add(_drawingPipe);
+            _drawingPipe = null;
+            await SaveDesignAsync();
+        }
+        else
+        {
+            _drawingPipe = null;
+        }
+    }
+
+    private async Task AddPointAsync(DesignPointKind kind, double x, double y)
+    {
+        _design.Points.Add(new DesignPoint { Kind = kind, X = x, Y = y });
+        await SaveDesignAsync();
+    }
+
+    private async Task SaveDesignAsync()
+    {
+        Recompute();
+        await DesignStore.SaveAsync(Id, _design);
+    }
+
+    // ---- Selection / inspector ----
+
+    private void SelectElement(object element)
+    {
+        if (_tool == Tool.Select)
+        {
+            _selected = element;
+        }
+    }
+
+    private void ClearSelection() => _selected = null;
+
+    private async Task RemoveSelectedAsync()
+    {
+        switch (_selected)
+        {
+            case DesignPipe pipe:
+                _design.Pipes.Remove(pipe);
+                break;
+            case DesignSprinkler sprinkler:
+                _design.Sprinklers.Remove(sprinkler);
+                break;
+            case DesignPoint point:
+                _design.Points.Remove(point);
+                break;
+        }
+
+        _selected = null;
+        await SaveDesignAsync();
+    }
+
+    private string SelectedTitle() => _selected switch
+    {
+        DesignPipe pipe => pipe.IsMain ? "Main pipe" : "Lateral pipe",
+        DesignSprinkler => "Sprinkler",
+        DesignPoint point => point.Kind switch
+        {
+            DesignPointKind.Pump => "Pump",
+            DesignPointKind.WaterSource => "Water source",
+            _ => "Valve",
+        },
+        _ => "",
+    };
+
+    private List<(string Label, string Value)> SelectedSpecs()
+    {
+        var inputs = _design.Inputs;
+        switch (_selected)
+        {
+            case DesignPipe pipe:
+            {
+                var diameter = pipe.IsMain ? inputs.MainDiameterMm : inputs.LateralDiameterMm;
+                var flow = pipe.IsMain ? _results?.DemandFlowLitresPerMinute : _results?.LateralFlowLitresPerMinute;
+                var velocity = pipe.IsMain ? _results?.MainVelocity : _results?.LateralVelocity;
+                return new()
+                {
+                    ("Length", $"{F1(pipe.LengthMetres)} m"),
+                    ("Diameter", $"{F0(diameter)} mm"),
+                    ("Flow", flow is null ? "—" : $"{F1(flow.Value)} L/min"),
+                    ("Velocity", velocity is null ? "—" : $"{F2(velocity.Value)} m/s"),
+                };
+            }
+            case DesignSprinkler:
+                return new()
+                {
+                    ("Flow", $"{F0(inputs.SprinklerFlowLitresPerHour)} L/hr"),
+                    ("Radius", $"{F1(inputs.SprinklerRadiusMetres)} m"),
+                    ("Spacing", $"{F1(inputs.SprinklerSpacingMetres)} m"),
+                };
+            case DesignPoint point when point.Kind == DesignPointKind.Pump:
+                return new()
+                {
+                    ("Rated flow", $"{F0(inputs.PumpFlowLitresPerMinute)} L/min"),
+                    ("Rated pressure", $"{F1(inputs.PumpPressureBar)} bar"),
+                };
+            case DesignPoint point:
+                return new()
+                {
+                    ("Position", $"{F0(point.X)}, {F0(point.Y)} m"),
+                };
+            default:
+                return new();
+        }
+    }
+
+    // ---- Calculations (engine: Farm.Irrigation.Calculators) ----
+
+    private sealed record DesignResults(
+        double DemandFlowLitresPerMinute,
+        double LateralFlowLitresPerMinute,
+        bool LateralCountAssumed,
+        double MainVelocity,
+        double LateralVelocity,
+        double FrictionLossBar,
+        double RequiredPumpPressureBar,
+        double CoverageRatio,
+        double ApplicationRateMmPerHour,
+        double RunTimeMinutes,
+        int MaxSprinklers);
+
+    private const double LitresPerMinuteToM3PerHour = 0.06;
+    private const double SprinklerHeadPressureBar = 2.0;
+    private const int AssumedLateralCount = 3; // matches the demo layout when nothing is drawn
+
+    private void Recompute()
+    {
+        var i = _design.Inputs;
+        if (i.PumpFlowLitresPerMinute <= 0 || i.MainDiameterMm <= 0 || i.LateralDiameterMm <= 0
+            || i.SprinklerCount <= 0 || i.SprinklerFlowLitresPerHour <= 0
+            || i.SprinklerSpacingMetres <= 0 || i.SprinklerRadiusMetres <= 0 || i.TargetDepthMm <= 0)
+        {
+            _results = null;
+            return;
+        }
+
+        var demandLmin = ZoneDesignCalculators.DemandFlowLitresPerMinute(i.SprinklerCount, i.SprinklerFlowLitresPerHour);
+
+        var drawnLaterals = _design.Pipes.Count(p => !p.IsMain);
+        var lateralCountAssumed = drawnLaterals == 0;
+        var lateralCount = lateralCountAssumed ? AssumedLateralCount : drawnLaterals;
+        var lateralLmin = demandLmin / lateralCount;
+
+        var mainVelocity = HydraulicsCalculators.VelocityMetresPerSecond(
+            demandLmin * LitresPerMinuteToM3PerHour, i.MainDiameterMm);
+        var lateralVelocity = HydraulicsCalculators.VelocityMetresPerSecond(
+            lateralLmin * LitresPerMinuteToM3PerHour, i.LateralDiameterMm);
+
+        // Friction over the drawn layout: full main length at demand flow, plus the
+        // single longest lateral at per-lateral flow (worst path). Zero until pipes exist.
+        var frictionKpa = 0.0;
+        var mainLength = _design.Pipes.Where(p => p.IsMain).Sum(p => p.LengthMetres);
+        if (mainLength > 0)
+        {
+            frictionKpa += HydraulicsCalculators.HazenWilliamsFrictionLoss(
+                demandLmin * LitresPerMinuteToM3PerHour, i.MainDiameterMm, mainLength, PipeRoughness.Upvc).PressureLossKpa;
+        }
+
+        var longestLateral = _design.Pipes.Where(p => !p.IsMain).Select(p => p.LengthMetres).DefaultIfEmpty(0).Max();
+        if (longestLateral > 0)
+        {
+            frictionKpa += HydraulicsCalculators.HazenWilliamsFrictionLoss(
+                lateralLmin * LitresPerMinuteToM3PerHour, i.LateralDiameterMm, longestLateral, PipeRoughness.Upvc).PressureLossKpa;
+        }
+
+        var frictionBar = frictionKpa / 100;
+        var applicationRate = ApplicationCalculators.SprinklerRateMmPerHour(
+            i.SprinklerFlowLitresPerHour, i.SprinklerSpacingMetres, i.SprinklerSpacingMetres);
+
+        _results = new DesignResults(
+            demandLmin,
+            lateralLmin,
+            lateralCountAssumed,
+            mainVelocity,
+            lateralVelocity,
+            frictionBar,
+            frictionBar + SprinklerHeadPressureBar,
+            ZoneDesignCalculators.CoverageRatio(i.SprinklerRadiusMetres, i.SprinklerSpacingMetres),
+            applicationRate,
+            ZoneDesignCalculators.RunTimeMinutesForDepth(i.TargetDepthMm, applicationRate),
+            ZoneDesignCalculators.MaxSprinklersForPumpFlow(i.PumpFlowLitresPerMinute, i.SprinklerFlowLitresPerHour));
+    }
+
+    private string SolverLabel() => _solveMode switch
+    {
+        SolveMode.PumpFlow => "REQUIRED PUMP FLOW",
+        SolveMode.MaxSprinklers => "MAX SPRINKLERS SUPPORTED",
+        _ => "RECOMMENDED RUNTIME",
+    };
+
+    private string SolverValue()
+    {
+        if (_results is null)
+        {
+            return "—";
+        }
+
+        return _solveMode switch
+        {
+            SolveMode.PumpFlow => $"{F0(_results.DemandFlowLitresPerMinute)} L/min",
+            SolveMode.MaxSprinklers => $"{_results.MaxSprinklers}",
+            _ => $"{F0(_results.RunTimeMinutes)} min",
+        };
+    }
+
+    private string SolverNote()
+    {
+        if (_results is null)
+        {
+            return "Enter valid design inputs";
+        }
+
+        var i = _design.Inputs;
+        return _solveMode switch
+        {
+            SolveMode.PumpFlow => $"{i.SprinklerCount} sprinklers × {F0(i.SprinklerFlowLitresPerHour)} L/hr",
+            SolveMode.MaxSprinklers => $"at {F0(i.PumpFlowLitresPerMinute)} L/min pump flow, {F0(i.SprinklerFlowLitresPerHour)} L/hr each",
+            _ => $"to deliver {F0(i.TargetDepthMm)}mm at {F1(_results.ApplicationRateMmPerHour)} mm/hr",
+        };
+    }
+
+    private static string VelocityNote(double velocity) =>
+        velocity <= 1.5 ? "Within recommended range" : "Above ~1.5 m/s guideline";
+
+    private static string CoverageNote(double ratio)
+    {
+        // Note: relational switch patterns ("< 0.9 =>") break the Razor parser
+        // inside @code blocks (misread as a tag) — hence plain ifs here.
+        if (ratio < 0.9)
+        {
+            return "Gaps in coverage — increase radius or reduce spacing";
+        }
+
+        if (ratio > 1.3)
+        {
+            return "Heavy overlap — spacing could be wider";
+        }
+
+        return "Good coverage";
+    }
+
+    private static string F0(double value) => value.ToString("0", CultureInfo.InvariantCulture);
+    private static string F1(double value) => value.ToString("0.0", CultureInfo.InvariantCulture);
+    private static string F2(double value) => value.ToString("0.00", CultureInfo.InvariantCulture);
+}

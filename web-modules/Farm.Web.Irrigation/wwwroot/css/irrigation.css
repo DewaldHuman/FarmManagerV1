@@ -238,3 +238,242 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ---- Zone Designs picker ---- */
+
+.zone-designs-flag {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.zone-designs-flag--saved {
+  color: var(--result-heading);
+}
+
+/* ---- Zone Designer ---- */
+
+.zone-designer-size {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.zone-designer-size label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zone-designer-size__input {
+  width: 90px;
+}
+
+.zone-designer-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  align-items: start;
+}
+
+.zone-designer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.zone-designer-tool {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--color-ink);
+  border: 2px solid var(--color-border-medium);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.zone-designer-tool--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.zone-designer-hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.zone-designer-canvas-wrap {
+  position: relative;
+  overflow: auto;
+  max-width: 100%;
+}
+
+.zone-designer-canvas {
+  display: block;
+  border-radius: var(--radius-control);
+}
+
+.zone-designer-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: var(--radius-control);
+  padding: 20px 24px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  max-width: 280px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(34, 31, 20, 0.08);
+  pointer-events: none;
+}
+
+.zone-designer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zone-designer-inspector {
+  padding: 20px;
+}
+
+.zone-designer-inspector__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.zone-designer-inspector__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.zone-designer-inspector__close {
+  background: none;
+  border: none;
+  font-size: 15px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.zone-designer-inspector__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.zone-designer-inspector__remove {
+  margin-top: 12px;
+}
+
+.zone-designer-solver {
+  background: var(--result-bg);
+  border: 2px solid var(--result-border);
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+
+.zone-designer-solver__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--result-heading);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.zone-designer-solver__value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--result-value);
+  line-height: 1.1;
+}
+
+.zone-designer-solver__note {
+  font-size: 13px;
+  color: #325033;
+  margin-top: 6px;
+}
+
+.zone-designer-solve-for {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.zone-designer-solve-for .calc-select {
+  margin-top: 6px;
+  margin-bottom: 0;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.zone-designer-section {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 12px;
+}
+
+.zone-designer-input {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.zone-designer-input > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zone-designer-input__field {
+  width: 90px;
+  padding: 8px 10px;
+}
+
+.zone-designer-input__unit {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  min-width: 34px;
+}
+
+.zone-designer-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.zone-designer-result strong {
+  white-space: nowrap;
+}
+
+.zone-designer-result__sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}

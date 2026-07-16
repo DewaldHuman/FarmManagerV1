@@ -51,6 +51,12 @@ builder.Services.AddHttpClient<Farm.Web.Core.Irrigation.IIrrigationService, Farm
     client.BaseAddress = new Uri(apiBaseUrl);
 }).AddHttpMessageHandler<AuthTokenHandler>();
 
+// Zone Designer's in-memory design store — also lives in Farm.Web.Core (see
+// note above re: lazy assemblies) because ZoneOverview.razor reads design
+// status. Singleton so drawn layouts survive in-app navigation; swap for an
+// HTTP-backed implementation when backend persistence lands.
+builder.Services.AddSingleton<Farm.Web.Core.Irrigation.IZoneDesignStore, Farm.Web.Core.Irrigation.InMemoryZoneDesignStore>();
+
 var host = builder.Build();
 
 // Must run after Build() (so IJSRuntime is resolvable) but before RunAsync()

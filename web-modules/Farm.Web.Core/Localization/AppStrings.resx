@@ -410,7 +410,10 @@
     <value>Not started</value>
   </data>
   <data name="ZoneOverview_IrrigationDesign_Placeholder" xml:space="preserve">
-    <value>No irrigation layout yet &#8212; use "Do calculations" to draw pipes, add a pump and sprinklers.</value>
+    <value>Open the zone designer to draw pipes and place your pump, sprinklers and valves.</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign_Saved" xml:space="preserve">
+    <value>Design saved</value>
   </data>
   <data name="ZoneOverview_History" xml:space="preserve">
     <value>Reports and history</value>

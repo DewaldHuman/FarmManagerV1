@@ -1,0 +1,84 @@
+@page "/irrigation/zone-designs"
+@layout AppShellLayout
+@attribute [Authorize]
+@inject IFarmService FarmService
+@inject IZoneDesignStore DesignStore
+@inject NavigationManager Nav
+
+@* Unlocalized by module-wide convention (see RunCalculator.razor / CLAUDE.md). *@
+
+<div class="page-header">
+    <div>
+        <div class="app-shell__eyebrow">Irrigation</div>
+        <h1 class="app-shell__title">Zone Designs</h1>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <p>Loading…</p>
+}
+else if (_zones.Count == 0)
+{
+    <p class="page-subtitle">No zones yet — add fields and zones under Farm Structure first.</p>
+}
+else
+{
+    <div class="zone-grid">
+        @foreach (var zone in _zones)
+        {
+            <div class="zone-card" @onclick="() => GoToOverview(zone.Id)">
+                <div class="zone-card__header">
+                    <div>
+                        <div class="zone-card__name">@zone.Name</div>
+                        <div class="zone-card__field">@zone.FieldName</div>
+                    </div>
+                    <div class="pill @StatusPillClass(zone.Status)">@StatusLabel(zone.Status)</div>
+                </div>
+                <div class="zone-card__meta">
+                    <span>@zone.Crop</span>
+                    <span>@zone.AreaHa.ToString("0.##") ha</span>
+                </div>
+                <span class="zone-designs-flag @(_hasDesign.Contains(zone.Id) ? "zone-designs-flag--saved" : "")">
+                    @(_hasDesign.Contains(zone.Id) ? "Design saved" : "No design yet")
+                </span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ZoneDto> _zones = new();
+    private HashSet<Guid> _hasDesign = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _zones = await FarmService.ListZonesAsync();
+        foreach (var zone in _zones)
+        {
+            if (await DesignStore.HasDesignAsync(zone.Id))
+            {
+                _hasDesign.Add(zone.Id);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private void GoToOverview(Guid zoneId) => Nav.NavigateTo($"/irrigation/zones/{zoneId}");
+
+    private string StatusPillClass(string status) => status switch
+    {
+        "due" => "pill-due",
+        "overdue" => "pill-overdue",
+        _ => "pill-ok",
+    };
+
+    private string StatusLabel(string status) => status switch
+    {
+        "due" => "Due",
+        "overdue" => "Overdue",
+        _ => "On schedule",
+    };
+}

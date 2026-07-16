@@ -4,6 +4,7 @@
 @using System.Globalization
 @inject IFarmService FarmService
 @inject IIrrigationService IrrigationService
+@inject IZoneDesignStore DesignStore
 @inject IStringLocalizer<AppStrings> Localizer
 @inject NavigationManager Nav
 
@@ -58,12 +59,12 @@ else
             </div>
             <div class="zone-overview-details__row">
                 <span>@Localizer["ZoneOverview_IrrigationDesign"]</span>
-                <strong>@Localizer["ZoneOverview_IrrigationDesign_NotStarted"]</strong>
+                <strong>@Localizer[_hasDesign ? "ZoneOverview_IrrigationDesign_Saved" : "ZoneOverview_IrrigationDesign_NotStarted"]</strong>
             </div>
         </div>
 
         <div>
-            <div class="zone-overview-placeholder-card">
+            <div class="zone-overview-placeholder-card zone-overview-placeholder-card--link" @onclick="GoToDesigner">
                 <div class="zone-overview-placeholder-card__title">@Localizer["ZoneOverview_IrrigationDesign"]</div>
                 <div class="zone-overview-placeholder-card__body">@Localizer["ZoneOverview_IrrigationDesign_Placeholder"]</div>
             </div>
@@ -81,6 +82,7 @@ else
 
     private ZoneDto? _zone;
     private string _lastWatered = string.Empty;
+    private bool _hasDesign;
     private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -92,6 +94,7 @@ else
             _lastWatered = runs.Count > 0
                 ? runs[0].CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
                 : Localizer["ZoneOverview_LastWatered_Never"];
+            _hasDesign = await DesignStore.HasDesignAsync(Id);
         }
 
         _loading = false;
@@ -104,6 +107,8 @@ else
     private void GoToCalculations() => Nav.NavigateTo($"/irrigation/run-calculator?zone={Id}");
 
     private void GoToHistory() => Nav.NavigateTo($"/irrigation/history?zone={Id}");
+
+    private void GoToDesigner() => Nav.NavigateTo($"/irrigation/zones/{Id}/design");
 
     private string StatusPillClass(string status) => status switch
     {

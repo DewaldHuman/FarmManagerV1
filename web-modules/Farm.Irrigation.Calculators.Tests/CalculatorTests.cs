@@ -326,3 +326,67 @@ public class FieldAreaCalculatorTests
         Assert.Equal(3200, FieldAreaCalculators.TrapezoidSquareMetres(100, 60, 40), 4);
     }
 }
+
+public class ZoneDesignCalculatorTests
+{
+    [Fact]
+    public void DemandFlow_15Sprinklers_200Lhr_Is50Lmin()
+    {
+        // 15 × 200 = 3,000 L/hr ÷ 60 = 50 L/min
+        Assert.Equal(50, ZoneDesignCalculators.DemandFlowLitresPerMinute(15, 200), 4);
+    }
+
+    [Fact]
+    public void MaxSprinklers_380LminPump_200LhrHeads_Is114()
+    {
+        // 380 × 60 = 22,800 L/hr ÷ 200 = 114
+        Assert.Equal(114, ZoneDesignCalculators.MaxSprinklersForPumpFlow(380, 200));
+    }
+
+    [Fact]
+    public void MaxSprinklers_RoundsDown()
+    {
+        // 10 × 60 = 600 ÷ 175 = 3.43 → 3
+        Assert.Equal(3, ZoneDesignCalculators.MaxSprinklersForPumpFlow(10, 175));
+    }
+
+    [Fact]
+    public void CoverageRatio_7mRadius_12mSpacing_Is1_17()
+    {
+        // 2 × 7 ÷ 12 = 1.1667
+        Assert.Equal(1.1667, ZoneDesignCalculators.CoverageRatio(7, 12), 4);
+    }
+
+    [Fact]
+    public void RunTime_12mm_At1_389mmPerHour_Is518min()
+    {
+        // Application rate 200 L/hr ÷ (12 × 12) m² = 1.3889 mm/hr;
+        // 12 ÷ 1.3889 × 60 = 518.4 min (mockup shows 518)
+        var rate = ApplicationCalculators.SprinklerRateMmPerHour(200, 12, 12);
+        Assert.Equal(1.3889, rate, 4);
+        Assert.Equal(518.4, ZoneDesignCalculators.RunTimeMinutesForDepth(12, rate), 1);
+    }
+
+    [Fact]
+    public void MainVelocity_50Lmin_In50mmPipe_Is0_42ms()
+    {
+        // 50 L/min = 3 m³/h; 0.000833 m³/s ÷ (π × 0.025²) = 0.424 m/s
+        Assert.Equal(0.424, HydraulicsCalculators.VelocityMetresPerSecond(50 * 0.06, 50), 3);
+    }
+
+    [Fact]
+    public void LateralVelocity_ThirdOfDemand_In25mmPipe_Is0_57ms()
+    {
+        // 50 ÷ 3 = 16.67 L/min = 1 m³/h; 0.000278 m³/s ÷ (π × 0.0125²) = 0.566 m/s
+        Assert.Equal(0.566, HydraulicsCalculators.VelocityMetresPerSecond(50.0 / 3 * 0.06, 25), 3);
+    }
+
+    [Fact]
+    public void GuardClauses_Throw()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => ZoneDesignCalculators.DemandFlowLitresPerMinute(0, 200));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ZoneDesignCalculators.MaxSprinklersForPumpFlow(380, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ZoneDesignCalculators.CoverageRatio(0, 12));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ZoneDesignCalculators.RunTimeMinutesForDepth(12, 0));
+    }
+}
