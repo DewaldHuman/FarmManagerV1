@@ -553,6 +553,7 @@
   line-height: 1.4;
 }
 
+.zone-designer-inspector__promote,
 .zone-designer-inspector__reset {
   background: none;
   border: none;

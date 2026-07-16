@@ -140,6 +140,23 @@ else
                         </g>
                     }
 
+                    @if (_selected is DesignPipe handlePipe && _tool == Tool.Select && handlePipe.Vertices.Count >= 2)
+                    {
+                        @* Endpoint resize handles for the selected pipe. *@
+                        var hFirst = handlePipe.Vertices[0];
+                        var hLast = handlePipe.Vertices[^1];
+                        <circle cx="@S(hFirst.X)" cy="@S(hFirst.Y)" r="0.9" fill="#fff" stroke="#e07b26" stroke-width="2"
+                                vector-effect="non-scaling-stroke"
+                                style="cursor: @(hFirst.Y == handlePipe.Vertices[1].Y ? "ew-resize" : "ns-resize");"
+                                @onmousedown="() => BeginVertexDrag(handlePipe, false)"
+                                @onmousedown:preventDefault="true" @onmousedown:stopPropagation="true" />
+                        <circle cx="@S(hLast.X)" cy="@S(hLast.Y)" r="0.9" fill="#fff" stroke="#e07b26" stroke-width="2"
+                                vector-effect="non-scaling-stroke"
+                                style="cursor: @(hLast.Y == handlePipe.Vertices[^2].Y ? "ew-resize" : "ns-resize");"
+                                @onmousedown="() => BeginVertexDrag(handlePipe, true)"
+                                @onmousedown:preventDefault="true" @onmousedown:stopPropagation="true" />
+                    }
+
                     @if (_dragTarget is not null)
                     {
                         @* Full-canvas drag overlay: keeps OffsetX/Y in SVG space during the move. *@
@@ -184,6 +201,12 @@ else
                                 <span class="zone-designer-input__unit">@prop.Unit</span>
                             </span>
                         </div>
+                    }
+                    @if (_selected is DesignPipe inspectedPipe)
+                    {
+                        <button class="zone-designer-inspector__promote" @onclick="TogglePipeMainAsync">
+                            @(inspectedPipe.IsMain ? "Make this a lateral" : "Make main pipe")
+                        </button>
                     }
                     @if (SelectedHasOverrides())
                     {
@@ -320,6 +343,11 @@ else
     private double _dragGrabDx, _dragGrabDy; // sprinkler/point: element pos − pointer pos
     private double _pipeAnchorX, _pipeAnchorY; // pipe: last applied (snapped) pointer
 
+    // Endpoint resize: non-null switches the drag into vertex mode — the endpoint
+    // slides along its adjacent segment's axis (straight/90° runs preserved).
+    private DesignVertex? _dragVertex;
+    private DesignVertex? _dragVertexNeighbor;
+
     private DesignResults? _results;
 
     // Status lets a global input reflect per-element overrides on the canvas:
@@ -422,6 +450,19 @@ else
         _dragStarted = false;
     }
 
+    private void BeginVertexDrag(DesignPipe pipe, bool endVertex)
+    {
+        if (_tool != Tool.Select || pipe.Vertices.Count < 2)
+        {
+            return;
+        }
+
+        _selected = pipe;
+        _dragTarget = pipe; // renders the drag overlay
+        _dragVertex = endVertex ? pipe.Vertices[^1] : pipe.Vertices[0];
+        _dragVertexNeighbor = endVertex ? pipe.Vertices[^2] : pipe.Vertices[1];
+    }
+
     private void OnDragMove(MouseEventArgs e)
     {
         if (_dragTarget is null)
@@ -431,6 +472,26 @@ else
 
         var px = e.OffsetX / PxPerMetre;
         var py = e.OffsetY / PxPerMetre;
+
+        if (_dragVertex is not null && _dragVertexNeighbor is not null)
+        {
+            // Endpoint resize: slide along the adjacent segment's axis only,
+            // never landing on the neighbor (min 1 m segment).
+            var (sx, sy) = SnapClamp(px, py);
+            if (_dragVertex.Y == _dragVertexNeighbor.Y)
+            {
+                if (sx != _dragVertexNeighbor.X)
+                {
+                    _dragVertex.X = sx;
+                }
+            }
+            else if (sy != _dragVertexNeighbor.Y)
+            {
+                _dragVertex.Y = sy;
+            }
+
+            return;
+        }
 
         if (!_dragStarted)
         {
@@ -492,6 +553,8 @@ else
         }
 
         _dragTarget = null;
+        _dragVertex = null;
+        _dragVertexNeighbor = null;
         await SaveDesignAsync(); // recompute once on drop (sprinkler→lateral assignment may change)
     }
 
@@ -730,6 +793,32 @@ else
         DesignPoint pt => pt.RatedFlowLitresPerMinute is not null || pt.RatedPressureBar is not null,
         _ => false,
     };
+
+    private async Task TogglePipeMainAsync()
+    {
+        if (_selected is not DesignPipe pipe)
+        {
+            return;
+        }
+
+        if (pipe.IsMain)
+        {
+            // Demoting may leave no main — the "No main pipe" warning covers that.
+            pipe.IsMain = false;
+        }
+        else
+        {
+            // Single-main invariant: demote the current main, promote this one.
+            foreach (var other in _design.Pipes.Where(p => p.IsMain))
+            {
+                other.IsMain = false;
+            }
+
+            pipe.IsMain = true;
+        }
+
+        await SaveDesignAsync();
+    }
 
     private async Task ResetSelectedOverridesAsync()
     {
