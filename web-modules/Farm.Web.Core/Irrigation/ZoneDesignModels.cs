@@ -25,6 +25,9 @@ public class DesignPipe
     public bool IsMain { get; set; }
     public List<DesignVertex> Vertices { get; set; } = new();
 
+    /// <summary>Per-pipe override; null inherits the design's main/lateral diameter input.</summary>
+    public double? DiameterMm { get; set; }
+
     public double LengthMetres
     {
         get
@@ -38,6 +41,38 @@ public class DesignPipe
             return total;
         }
     }
+
+    /// <summary>Shortest distance from a point to this pipe's polyline (metres).</summary>
+    public double DistanceToPoint(double x, double y)
+    {
+        if (Vertices.Count == 0)
+        {
+            return double.MaxValue;
+        }
+
+        var best = double.MaxValue;
+        for (var i = 0; i < Vertices.Count; i++)
+        {
+            double d;
+            if (i == Vertices.Count - 1)
+            {
+                d = Math.Sqrt(Math.Pow(x - Vertices[i].X, 2) + Math.Pow(y - Vertices[i].Y, 2));
+            }
+            else
+            {
+                var (ax, ay) = (Vertices[i].X, Vertices[i].Y);
+                var (bx, by) = (Vertices[i + 1].X, Vertices[i + 1].Y);
+                var (dx, dy) = (bx - ax, by - ay);
+                var lengthSq = dx * dx + dy * dy;
+                var t = lengthSq == 0 ? 0 : Math.Clamp(((x - ax) * dx + (y - ay) * dy) / lengthSq, 0, 1);
+                d = Math.Sqrt(Math.Pow(x - (ax + t * dx), 2) + Math.Pow(y - (ay + t * dy), 2));
+            }
+
+            best = Math.Min(best, d);
+        }
+
+        return best;
+    }
 }
 
 public class DesignSprinkler
@@ -45,6 +80,10 @@ public class DesignSprinkler
     public Guid Id { get; set; } = Guid.NewGuid();
     public double X { get; set; }
     public double Y { get; set; }
+
+    // Per-sprinkler overrides; null inherits the design inputs.
+    public double? FlowLitresPerHour { get; set; }
+    public double? RadiusMetres { get; set; }
 }
 
 public class DesignPoint
@@ -53,6 +92,10 @@ public class DesignPoint
     public DesignPointKind Kind { get; set; }
     public double X { get; set; }
     public double Y { get; set; }
+
+    // Pump-only overrides; null inherits the design inputs. Ignored for valve/source.
+    public double? RatedFlowLitresPerMinute { get; set; }
+    public double? RatedPressureBar { get; set; }
 }
 
 /// <summary>Editable design inputs; defaults match the reference mockup.</summary>

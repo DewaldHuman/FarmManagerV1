@@ -54,7 +54,7 @@ else
             }
 
             <div class="zone-designer-canvas-wrap">
-                <svg class="zone-designer-canvas"
+                <svg class="zone-designer-canvas @(_tool == Tool.Select ? "zone-designer-canvas--select" : "")"
                      width="@Px(_design.WidthMetres)" height="@Px(_design.HeightMetres)"
                      viewBox="0 0 @(S(_design.WidthMetres)) @(S(_design.HeightMetres))"
                      xmlns="http://www.w3.org/2000/svg">
@@ -75,7 +75,7 @@ else
                     @* Sprinkler coverage circles render behind everything else. *@
                     @foreach (var sprinkler in _design.Sprinklers)
                     {
-                        <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="@S(_design.Inputs.SprinklerRadiusMetres)"
+                        <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="@S(sprinkler.RadiusMetres ?? _design.Inputs.SprinklerRadiusMetres)"
                                 fill="#2c6330" fill-opacity="0.06" stroke="#7ba57e" stroke-width="1"
                                 stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none" />
                     }
@@ -83,7 +83,8 @@ else
                     @foreach (var pipe in _design.Pipes)
                     {
                         var points = string.Join(" ", pipe.Vertices.Select(v => $"{S(v.X)},{S(v.Y)}"));
-                        <g @onclick="() => SelectElement(pipe)" @onclick:stopPropagation="true">
+                        <g @onclick="() => SelectElement(pipe)" @onclick:stopPropagation="true"
+                           @onmousedown="() => BeginDrag(pipe)" @onmousedown:preventDefault="true">
                             <polyline points="@points" fill="none" stroke="transparent" stroke-width="14" vector-effect="non-scaling-stroke" />
                             <polyline points="@points" fill="none"
                                       stroke="@(ReferenceEquals(_selected, pipe) ? "#e07b26" : (pipe.IsMain ? "#2c6330" : "#4c8a50"))"
@@ -106,7 +107,8 @@ else
 
                     @foreach (var sprinkler in _design.Sprinklers)
                     {
-                        <g @onclick="() => SelectElement(sprinkler)" @onclick:stopPropagation="true">
+                        <g @onclick="() => SelectElement(sprinkler)" @onclick:stopPropagation="true"
+                           @onmousedown="() => BeginDrag(sprinkler)" @onmousedown:preventDefault="true">
                             <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="1.6" fill="transparent" />
                             <circle cx="@S(sprinkler.X)" cy="@S(sprinkler.Y)" r="0.6"
                                     fill="@(ReferenceEquals(_selected, sprinkler) ? "#e07b26" : "#2c6330")" />
@@ -115,7 +117,8 @@ else
 
                     @foreach (var point in _design.Points)
                     {
-                        <g @onclick="() => SelectElement(point)" @onclick:stopPropagation="true">
+                        <g @onclick="() => SelectElement(point)" @onclick:stopPropagation="true"
+                           @onmousedown="() => BeginDrag(point)" @onmousedown:preventDefault="true">
                             <circle cx="@S(point.X)" cy="@S(point.Y)" r="2.2" fill="transparent" />
                             @if (point.Kind == DesignPointKind.Pump)
                             {
@@ -134,6 +137,14 @@ else
                                       fill="@(ReferenceEquals(_selected, point) ? "#e07b26" : "#6e4d32")" />
                             }
                         </g>
+                    }
+
+                    @if (_dragTarget is not null)
+                    {
+                        @* Full-canvas drag overlay: keeps OffsetX/Y in SVG space during the move. *@
+                        <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
+                              fill="transparent" style="cursor: grabbing;"
+                              @onmousemove="OnDragMove" @onmouseup="OnDragEnd" @onmouseleave="OnDragEnd" />
                     }
                 </svg>
 
@@ -161,6 +172,22 @@ else
                             <strong>@value</strong>
                         </div>
                     }
+                    @foreach (var prop in SelectedEditableProps())
+                    {
+                        <div class="zone-designer-inspector__row zone-designer-inspector__row--edit">
+                            <span>@prop.Label</span>
+                            <span class="zone-designer-inspector__edit">
+                                <input type="number" class="zone-designer-input__field" step="any"
+                                       value="@S(prop.Get())"
+                                       @onchange="e => OnPropChanged(prop, e)" />
+                                <span class="zone-designer-input__unit">@prop.Unit</span>
+                            </span>
+                        </div>
+                    }
+                    @if (SelectedHasOverrides())
+                    {
+                        <button class="zone-designer-inspector__reset" @onclick="ResetSelectedOverridesAsync">Reset to design defaults</button>
+                    }
                     <button class="btn btn-secondary zone-designer-inspector__remove" @onclick="RemoveSelectedAsync">Remove</button>
                 </div>
             }
@@ -182,13 +209,15 @@ else
             <div class="zone-designer-section">Design inputs</div>
             @foreach (var input in _inputRows)
             {
+                var fromCanvas = input.IsCount && _design.Sprinklers.Count > 0;
                 <div class="zone-designer-input">
                     <label>@input.Label</label>
                     <span>
                         <input type="number" class="zone-designer-input__field" step="any"
-                               value="@S(input.Get())"
+                               disabled="@fromCanvas"
+                               value="@(fromCanvas ? _design.Sprinklers.Count.ToString(CultureInfo.InvariantCulture) : S(input.Get()))"
                                @onchange="e => OnInputChanged(input, e)" />
-                        <span class="zone-designer-input__unit">@input.Unit</span>
+                        <span class="zone-designer-input__unit">@(fromCanvas ? "from canvas" : input.Unit)</span>
                     </span>
                 </div>
             }
@@ -203,7 +232,7 @@ else
                 <div class="zone-designer-result">
                     <div>
                         <div>Total demand flow</div>
-                        <div class="zone-designer-result__sub">@_design.Inputs.SprinklerCount sprinklers × @F0(_design.Inputs.SprinklerFlowLitresPerHour) L/hr</div>
+                        <div class="zone-designer-result__sub">@_results.EffectiveSprinklerCount sprinklers@(_results.CountFromCanvas ? " placed on canvas" : "") × @F0(_results.AvgSprinklerFlowLitresPerHour) L/hr</div>
                     </div>
                     <strong>@F0(_results.DemandFlowLitresPerMinute) L/min</strong>
                 </div>
@@ -217,14 +246,14 @@ else
                 <div class="zone-designer-result">
                     <div>
                         <div>Lateral pipe velocity</div>
-                        <div class="zone-designer-result__sub">@VelocityNote(_results.LateralVelocity)@(_results.LateralCountAssumed ? " · assumes 3 laterals (none drawn)" : "")</div>
+                        <div class="zone-designer-result__sub">@VelocityNote(_results.LateralVelocity)@(_results.LateralCountAssumed ? " · assumes 3 laterals (none drawn)" : _results.BusiestLateralSprinklers > 0 ? $" · busiest lateral: {_results.BusiestLateralSprinklers} sprinklers" : "")</div>
                     </div>
                     <strong>@F2(_results.LateralVelocity) m/s</strong>
                 </div>
                 <div class="zone-designer-result">
                     <div>
                         <div>Friction loss (main + lateral)</div>
-                        <div class="zone-designer-result__sub">Hazen-Williams estimate, C=150</div>
+                        <div class="zone-designer-result__sub">Hazen-Williams + Christiansen, C=150</div>
                     </div>
                     <strong>@F2(_results.FrictionLossBar) bar</strong>
                 </div>
@@ -272,9 +301,17 @@ else
     private DesignPipe? _drawingPipe;
     private object? _selected;
 
+    // Drag-to-move (Select tool). While dragging, a transparent overlay rect
+    // covers the whole canvas so MouseEventArgs.OffsetX/Y stays in SVG space
+    // no matter which element is under the cursor (offset is target-relative).
+    private object? _dragTarget;
+    private bool _dragStarted;
+    private double _dragGrabDx, _dragGrabDy; // sprinkler/point: element pos − pointer pos
+    private double _pipeAnchorX, _pipeAnchorY; // pipe: last applied (snapped) pointer
+
     private DesignResults? _results;
 
-    private sealed record InputRow(string Label, string Unit, Func<double> Get, Action<double> Set);
+    private sealed record InputRow(string Label, string Unit, Func<double> Get, Action<double> Set, bool IsCount = false);
 
     private List<InputRow> _inputRows = new();
 
@@ -293,7 +330,7 @@ else
             new("Pump pressure", "bar", () => inputs.PumpPressureBar, v => inputs.PumpPressureBar = v),
             new("Main pipe diameter", "mm", () => inputs.MainDiameterMm, v => inputs.MainDiameterMm = v),
             new("Lateral pipe diameter", "mm", () => inputs.LateralDiameterMm, v => inputs.LateralDiameterMm = v),
-            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v),
+            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v, IsCount: true),
             new("Sprinkler flow (each)", "L/hr", () => inputs.SprinklerFlowLitresPerHour, v => inputs.SprinklerFlowLitresPerHour = v),
             new("Sprinkler spacing", "m", () => inputs.SprinklerSpacingMetres, v => inputs.SprinklerSpacingMetres = v),
             new("Sprinkler radius", "m", () => inputs.SprinklerRadiusMetres, v => inputs.SprinklerRadiusMetres = v),
@@ -339,6 +376,96 @@ else
         var y = Math.Clamp(Math.Round(e.OffsetY / PxPerMetre), 0, _design.HeightMetres);
         return (x, y);
     }
+
+    // ---- Drag-to-move ----
+
+    private void BeginDrag(object element)
+    {
+        if (_tool != Tool.Select)
+        {
+            return;
+        }
+
+        _selected = element;
+        _dragTarget = element;
+        _dragStarted = false;
+    }
+
+    private void OnDragMove(MouseEventArgs e)
+    {
+        if (_dragTarget is null)
+        {
+            return;
+        }
+
+        var px = e.OffsetX / PxPerMetre;
+        var py = e.OffsetY / PxPerMetre;
+
+        if (!_dragStarted)
+        {
+            // First move: record grab offsets so the element doesn't jump under the pointer.
+            switch (_dragTarget)
+            {
+                case DesignSprinkler s:
+                    _dragGrabDx = s.X - px;
+                    _dragGrabDy = s.Y - py;
+                    break;
+                case DesignPoint p:
+                    _dragGrabDx = p.X - px;
+                    _dragGrabDy = p.Y - py;
+                    break;
+                case DesignPipe:
+                    _pipeAnchorX = Math.Round(px);
+                    _pipeAnchorY = Math.Round(py);
+                    break;
+            }
+
+            _dragStarted = true;
+            return;
+        }
+
+        switch (_dragTarget)
+        {
+            case DesignSprinkler s:
+                (s.X, s.Y) = SnapClamp(px + _dragGrabDx, py + _dragGrabDy);
+                break;
+            case DesignPoint p:
+                (p.X, p.Y) = SnapClamp(px + _dragGrabDx, py + _dragGrabDy);
+                break;
+            case DesignPipe pipe:
+                var dx = Math.Round(px) - _pipeAnchorX;
+                var dy = Math.Round(py) - _pipeAnchorY;
+                if (dx != 0 || dy != 0)
+                {
+                    // Clamp the translation so no vertex leaves the canvas.
+                    dx = Math.Clamp(dx, -pipe.Vertices.Min(v => v.X), _design.WidthMetres - pipe.Vertices.Max(v => v.X));
+                    dy = Math.Clamp(dy, -pipe.Vertices.Min(v => v.Y), _design.HeightMetres - pipe.Vertices.Max(v => v.Y));
+                    foreach (var v in pipe.Vertices)
+                    {
+                        v.X += dx;
+                        v.Y += dy;
+                    }
+
+                    _pipeAnchorX += dx;
+                    _pipeAnchorY += dy;
+                }
+                break;
+        }
+    }
+
+    private async Task OnDragEnd()
+    {
+        if (_dragTarget is null)
+        {
+            return;
+        }
+
+        _dragTarget = null;
+        await SaveDesignAsync(); // recompute once on drop (sprinkler→lateral assignment may change)
+    }
+
+    private (double X, double Y) SnapClamp(double x, double y) =>
+        (Math.Clamp(Math.Round(x), 0, _design.WidthMetres), Math.Clamp(Math.Round(y), 0, _design.HeightMetres));
 
     private async Task OnCanvasClick(MouseEventArgs e)
     {
@@ -479,13 +606,22 @@ else
         {
             case DesignPipe pipe:
             {
-                var diameter = pipe.IsMain ? inputs.MainDiameterMm : inputs.LateralDiameterMm;
+                if (!pipe.IsMain && _lateralStats.TryGetValue(pipe.Id, out var stats))
+                {
+                    return new()
+                    {
+                        ("Length", $"{F1(pipe.LengthMetres)} m"),
+                        ("Sprinklers", stats.SprinklerCount.ToString()),
+                        ("Flow", $"{F1(stats.FlowLitresPerMinute)} L/min"),
+                        ("Velocity", $"{F2(stats.Velocity)} m/s"),
+                    };
+                }
+
                 var flow = pipe.IsMain ? _results?.DemandFlowLitresPerMinute : _results?.LateralFlowLitresPerMinute;
                 var velocity = pipe.IsMain ? _results?.MainVelocity : _results?.LateralVelocity;
                 return new()
                 {
                     ("Length", $"{F1(pipe.LengthMetres)} m"),
-                    ("Diameter", $"{F0(diameter)} mm"),
                     ("Flow", flow is null ? "—" : $"{F1(flow.Value)} L/min"),
                     ("Velocity", velocity is null ? "—" : $"{F2(velocity.Value)} m/s"),
                 };
@@ -493,16 +629,10 @@ else
             case DesignSprinkler:
                 return new()
                 {
-                    ("Flow", $"{F0(inputs.SprinklerFlowLitresPerHour)} L/hr"),
-                    ("Radius", $"{F1(inputs.SprinklerRadiusMetres)} m"),
                     ("Spacing", $"{F1(inputs.SprinklerSpacingMetres)} m"),
                 };
             case DesignPoint point when point.Kind == DesignPointKind.Pump:
-                return new()
-                {
-                    ("Rated flow", $"{F0(inputs.PumpFlowLitresPerMinute)} L/min"),
-                    ("Rated pressure", $"{F1(inputs.PumpPressureBar)} bar"),
-                };
+                return new();
             case DesignPoint point:
                 return new()
                 {
@@ -513,12 +643,84 @@ else
         }
     }
 
+    // ---- Per-element property overrides (null = inherit the design input) ----
+
+    private sealed record EditableProp(string Label, string Unit, Func<double> Get, Action<double> Set);
+
+    private List<EditableProp> SelectedEditableProps()
+    {
+        var i = _design.Inputs;
+        return _selected switch
+        {
+            DesignSprinkler s => new()
+            {
+                new("Flow", "L/hr", () => s.FlowLitresPerHour ?? i.SprinklerFlowLitresPerHour, v => s.FlowLitresPerHour = v),
+                new("Radius", "m", () => s.RadiusMetres ?? i.SprinklerRadiusMetres, v => s.RadiusMetres = v),
+            },
+            DesignPipe p => new()
+            {
+                new("Diameter", "mm", () => p.DiameterMm ?? (p.IsMain ? i.MainDiameterMm : i.LateralDiameterMm), v => p.DiameterMm = v),
+            },
+            DesignPoint pt when pt.Kind == DesignPointKind.Pump => new()
+            {
+                new("Rated flow", "L/min", () => pt.RatedFlowLitresPerMinute ?? i.PumpFlowLitresPerMinute, v => pt.RatedFlowLitresPerMinute = v),
+                new("Rated pressure", "bar", () => pt.RatedPressureBar ?? i.PumpPressureBar, v => pt.RatedPressureBar = v),
+            },
+            _ => new(),
+        };
+    }
+
+    private async Task OnPropChanged(EditableProp prop, ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && value > 0)
+        {
+            prop.Set(value);
+            await SaveDesignAsync();
+        }
+    }
+
+    private bool SelectedHasOverrides() => _selected switch
+    {
+        DesignSprinkler s => s.FlowLitresPerHour is not null || s.RadiusMetres is not null,
+        DesignPipe p => p.DiameterMm is not null,
+        DesignPoint pt => pt.RatedFlowLitresPerMinute is not null || pt.RatedPressureBar is not null,
+        _ => false,
+    };
+
+    private async Task ResetSelectedOverridesAsync()
+    {
+        switch (_selected)
+        {
+            case DesignSprinkler s:
+                s.FlowLitresPerHour = null;
+                s.RadiusMetres = null;
+                break;
+            case DesignPipe p:
+                p.DiameterMm = null;
+                break;
+            case DesignPoint pt:
+                pt.RatedFlowLitresPerMinute = null;
+                pt.RatedPressureBar = null;
+                break;
+        }
+
+        await SaveDesignAsync();
+    }
+
     // ---- Calculations (engine: Farm.Irrigation.Calculators) ----
 
+    private sealed record LateralStats(
+        int SprinklerCount, double FlowLitresPerMinute, double Velocity, double FrictionKpa);
+
+    private readonly Dictionary<Guid, LateralStats> _lateralStats = new();
+
     private sealed record DesignResults(
+        int EffectiveSprinklerCount,
+        bool CountFromCanvas,
         double DemandFlowLitresPerMinute,
         double LateralFlowLitresPerMinute,
         bool LateralCountAssumed,
+        int BusiestLateralSprinklers,
         double MainVelocity,
         double LateralVelocity,
         double FrictionLossBar,
@@ -526,7 +728,9 @@ else
         double CoverageRatio,
         double ApplicationRateMmPerHour,
         double RunTimeMinutes,
-        int MaxSprinklers);
+        int MaxSprinklers,
+        double AvgSprinklerFlowLitresPerHour,
+        double PumpFlowLitresPerMinute);
 
     private const double LitresPerMinuteToM3PerHour = 0.06;
     private const double SprinklerHeadPressureBar = 2.0;
@@ -534,52 +738,138 @@ else
 
     private void Recompute()
     {
+        _lateralStats.Clear();
         var i = _design.Inputs;
+
+        // Sprinklers placed on the canvas take precedence over the count input;
+        // the input only applies while the layout has none (planning mode).
+        var countFromCanvas = _design.Sprinklers.Count > 0;
+        var effectiveCount = countFromCanvas ? _design.Sprinklers.Count : i.SprinklerCount;
+
         if (i.PumpFlowLitresPerMinute <= 0 || i.MainDiameterMm <= 0 || i.LateralDiameterMm <= 0
-            || i.SprinklerCount <= 0 || i.SprinklerFlowLitresPerHour <= 0
+            || effectiveCount <= 0 || i.SprinklerFlowLitresPerHour <= 0
             || i.SprinklerSpacingMetres <= 0 || i.SprinklerRadiusMetres <= 0 || i.TargetDepthMm <= 0)
         {
             _results = null;
             return;
         }
 
-        var demandLmin = ZoneDesignCalculators.DemandFlowLitresPerMinute(i.SprinklerCount, i.SprinklerFlowLitresPerHour);
+        // Per-element overrides: null inherits the matching design input.
+        double SprinklerFlowLhr(DesignSprinkler s) => s.FlowLitresPerHour ?? i.SprinklerFlowLitresPerHour;
+        double PipeDiameterMm(DesignPipe p) => p.DiameterMm ?? (p.IsMain ? i.MainDiameterMm : i.LateralDiameterMm);
 
-        var drawnLaterals = _design.Pipes.Count(p => !p.IsMain);
-        var lateralCountAssumed = drawnLaterals == 0;
-        var lateralCount = lateralCountAssumed ? AssumedLateralCount : drawnLaterals;
-        var lateralLmin = demandLmin / lateralCount;
+        var demandLmin = countFromCanvas
+            ? _design.Sprinklers.Sum(SprinklerFlowLhr) / 60
+            : ZoneDesignCalculators.DemandFlowLitresPerMinute(effectiveCount, i.SprinklerFlowLitresPerHour);
+        var avgSprinklerFlowLhr = demandLmin * 60 / effectiveCount;
 
+        var mainPipe = _design.Pipes.FirstOrDefault(p => p.IsMain);
+        var mainDiameterMm = mainPipe is null ? i.MainDiameterMm : PipeDiameterMm(mainPipe);
         var mainVelocity = HydraulicsCalculators.VelocityMetresPerSecond(
-            demandLmin * LitresPerMinuteToM3PerHour, i.MainDiameterMm);
-        var lateralVelocity = HydraulicsCalculators.VelocityMetresPerSecond(
-            lateralLmin * LitresPerMinuteToM3PerHour, i.LateralDiameterMm);
+            demandLmin * LitresPerMinuteToM3PerHour, mainDiameterMm);
 
-        // Friction over the drawn layout: full main length at demand flow, plus the
-        // single longest lateral at per-lateral flow (worst path). Zero until pipes exist.
-        var frictionKpa = 0.0;
+        // Per-lateral hydraulics from the drawn layout: each placed sprinkler is
+        // assigned to its nearest lateral, each lateral carries its own flow, and
+        // lateral friction applies the Christiansen reduction (flow decreases at
+        // every outlet). Results report the busiest lateral (worst path).
+        var laterals = _design.Pipes.Where(p => !p.IsMain).ToList();
+        var lateralCountAssumed = laterals.Count == 0;
+
+        double lateralLmin;
+        double lateralVelocity;
+        var lateralFrictionKpa = 0.0;
+        var busiestSprinklers = 0;
+
+        if (lateralCountAssumed)
+        {
+            // No laterals drawn: assumed even split, no drawn length → no lateral friction.
+            lateralLmin = demandLmin / AssumedLateralCount;
+            lateralVelocity = HydraulicsCalculators.VelocityMetresPerSecond(
+                lateralLmin * LitresPerMinuteToM3PerHour, i.LateralDiameterMm);
+        }
+        else if (countFromCanvas)
+        {
+            var assignedCounts = laterals.ToDictionary(p => p.Id, _ => 0);
+            var assignedFlowsLhr = laterals.ToDictionary(p => p.Id, _ => 0.0);
+            foreach (var sprinkler in _design.Sprinklers)
+            {
+                var nearest = laterals.MinBy(p => p.DistanceToPoint(sprinkler.X, sprinkler.Y))!;
+                assignedCounts[nearest.Id]++;
+                assignedFlowsLhr[nearest.Id] += SprinklerFlowLhr(sprinkler);
+            }
+
+            foreach (var lateral in laterals)
+            {
+                var assigned = assignedCounts[lateral.Id];
+                var diameterMm = PipeDiameterMm(lateral);
+                var flowLmin = assignedFlowsLhr[lateral.Id] / 60;
+                var velocity = assigned > 0
+                    ? HydraulicsCalculators.VelocityMetresPerSecond(flowLmin * LitresPerMinuteToM3PerHour, diameterMm)
+                    : 0;
+                var frictionForLateral = assigned > 0 && lateral.LengthMetres > 0
+                    ? HydraulicsCalculators.LateralFrictionLoss(
+                        flowLmin * LitresPerMinuteToM3PerHour, diameterMm,
+                        lateral.LengthMetres, PipeRoughness.Upvc, assigned).PressureLossKpa
+                    : 0;
+                _lateralStats[lateral.Id] = new LateralStats(assigned, flowLmin, velocity, frictionForLateral);
+            }
+
+            var busiest = _lateralStats.Values.OrderByDescending(s => s.FlowLitresPerMinute).First();
+            busiestSprinklers = busiest.SprinklerCount;
+            lateralLmin = busiest.FlowLitresPerMinute;
+            lateralVelocity = busiest.Velocity;
+            lateralFrictionKpa = _lateralStats.Values.Max(s => s.FrictionKpa);
+        }
+        else
+        {
+            // Laterals drawn but no sprinklers placed: even split of the input count,
+            // Christiansen F from the per-lateral outlet estimate, on the longest lateral.
+            lateralLmin = demandLmin / laterals.Count;
+            var outletsPerLateral = Math.Max(1, (int)Math.Round((double)effectiveCount / laterals.Count));
+            var longestLateral = laterals.MaxBy(p => p.LengthMetres)!;
+            var longestDiameterMm = PipeDiameterMm(longestLateral);
+            lateralVelocity = HydraulicsCalculators.VelocityMetresPerSecond(
+                lateralLmin * LitresPerMinuteToM3PerHour, longestDiameterMm);
+
+            if (longestLateral.LengthMetres > 0)
+            {
+                lateralFrictionKpa = HydraulicsCalculators.LateralFrictionLoss(
+                    lateralLmin * LitresPerMinuteToM3PerHour, longestDiameterMm,
+                    longestLateral.LengthMetres, PipeRoughness.Upvc, outletsPerLateral).PressureLossKpa;
+            }
+
+            foreach (var lateral in laterals)
+            {
+                _lateralStats[lateral.Id] = new LateralStats(outletsPerLateral, lateralLmin, lateralVelocity, 0);
+            }
+        }
+
+        var frictionKpa = lateralFrictionKpa;
         var mainLength = _design.Pipes.Where(p => p.IsMain).Sum(p => p.LengthMetres);
         if (mainLength > 0)
         {
             frictionKpa += HydraulicsCalculators.HazenWilliamsFrictionLoss(
-                demandLmin * LitresPerMinuteToM3PerHour, i.MainDiameterMm, mainLength, PipeRoughness.Upvc).PressureLossKpa;
-        }
-
-        var longestLateral = _design.Pipes.Where(p => !p.IsMain).Select(p => p.LengthMetres).DefaultIfEmpty(0).Max();
-        if (longestLateral > 0)
-        {
-            frictionKpa += HydraulicsCalculators.HazenWilliamsFrictionLoss(
-                lateralLmin * LitresPerMinuteToM3PerHour, i.LateralDiameterMm, longestLateral, PipeRoughness.Upvc).PressureLossKpa;
+                demandLmin * LitresPerMinuteToM3PerHour, mainDiameterMm, mainLength, PipeRoughness.Upvc).PressureLossKpa;
         }
 
         var frictionBar = frictionKpa / 100;
+
+        // Application rate/runtime follow the average effective sprinkler flow
+        // (equals the input when nothing is overridden or in planning mode).
         var applicationRate = ApplicationCalculators.SprinklerRateMmPerHour(
-            i.SprinklerFlowLitresPerHour, i.SprinklerSpacingMetres, i.SprinklerSpacingMetres);
+            avgSprinklerFlowLhr, i.SprinklerSpacingMetres, i.SprinklerSpacingMetres);
+
+        // The max-sprinklers solver uses the placed pump's rating when one exists.
+        var pump = _design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump);
+        var pumpFlowLmin = pump?.RatedFlowLitresPerMinute ?? i.PumpFlowLitresPerMinute;
 
         _results = new DesignResults(
+            effectiveCount,
+            countFromCanvas,
             demandLmin,
             lateralLmin,
             lateralCountAssumed,
+            busiestSprinklers,
             mainVelocity,
             lateralVelocity,
             frictionBar,
@@ -587,7 +877,9 @@ else
             ZoneDesignCalculators.CoverageRatio(i.SprinklerRadiusMetres, i.SprinklerSpacingMetres),
             applicationRate,
             ZoneDesignCalculators.RunTimeMinutesForDepth(i.TargetDepthMm, applicationRate),
-            ZoneDesignCalculators.MaxSprinklersForPumpFlow(i.PumpFlowLitresPerMinute, i.SprinklerFlowLitresPerHour));
+            ZoneDesignCalculators.MaxSprinklersForPumpFlow(pumpFlowLmin, i.SprinklerFlowLitresPerHour),
+            avgSprinklerFlowLhr,
+            pumpFlowLmin);
     }
 
     private string SolverLabel() => _solveMode switch
@@ -622,8 +914,8 @@ else
         var i = _design.Inputs;
         return _solveMode switch
         {
-            SolveMode.PumpFlow => $"{i.SprinklerCount} sprinklers × {F0(i.SprinklerFlowLitresPerHour)} L/hr",
-            SolveMode.MaxSprinklers => $"at {F0(i.PumpFlowLitresPerMinute)} L/min pump flow, {F0(i.SprinklerFlowLitresPerHour)} L/hr each",
+            SolveMode.PumpFlow => $"{_results.EffectiveSprinklerCount} sprinklers{(_results.CountFromCanvas ? " placed on canvas" : "")} × {F0(_results.AvgSprinklerFlowLitresPerHour)} L/hr",
+            SolveMode.MaxSprinklers => $"at {F0(_results.PumpFlowLitresPerMinute)} L/min pump flow, {F0(i.SprinklerFlowLitresPerHour)} L/hr each",
             _ => $"to deliver {F0(i.TargetDepthMm)}mm at {F1(_results.ApplicationRateMmPerHour)} mm/hr",
         };
     }

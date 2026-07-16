@@ -515,3 +515,36 @@
   color: var(--color-text-muted);
   margin-top: 2px;
 }
+
+.zone-designer-input__field:disabled {
+  background: var(--color-border-light);
+  color: var(--color-text-secondary);
+}
+
+.zone-designer-canvas--select g {
+  cursor: grab;
+}
+
+.zone-designer-inspector__row--edit {
+  border-bottom: none;
+  padding: 6px 0;
+}
+
+.zone-designer-inspector__edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zone-designer-inspector__reset {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  align-self: flex-start;
+}
