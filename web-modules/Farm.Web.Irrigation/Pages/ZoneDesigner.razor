@@ -8,7 +8,7 @@
 
 @* Unlocalized by module-wide convention (see RunCalculator.razor / CLAUDE.md). *@
 
-<button class="calc-back-btn" @onclick="GoBack">← Back to zone overview</button>
+<button class="calc-back-btn" @onclick="GoBack">← Zone overview</button>
 
 @if (_loading)
 {
@@ -27,11 +27,11 @@ else
         </div>
         <div class="zone-designer-size">
             <label>Width (m)
-                <input type="number" class="form-input zone-designer-size__input" min="10" step="1"
+                <input type="number" class="zone-designer-size__input" min="10" step="1"
                        @bind="_design.WidthMetres" @bind:after="SaveDesignAsync" />
             </label>
             <label>Height (m)
-                <input type="number" class="form-input zone-designer-size__input" min="10" step="1"
+                <input type="number" class="zone-designer-size__input" min="10" step="1"
                        @bind="_design.HeightMetres" @bind:after="SaveDesignAsync" />
             </label>
         </div>
@@ -60,17 +60,17 @@ else
                      xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <pattern id="designGrid" width="5" height="5" patternUnits="userSpaceOnUse">
-                            <path d="M 5 0 L 0 0 0 5" fill="none" stroke="#dcd8c8" stroke-width="0.12" />
+                            <path d="M 5 0 L 0 0 0 5" fill="none" stroke="#dfe3d2" stroke-width="0.12" />
                         </pattern>
                     </defs>
 
                     @* Background: fill + grid + border; the fill layer is the placement/deselect click target. *@
                     <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
-                          fill="#f4f2ea" @onclick="OnCanvasClick" @ondblclick="OnCanvasDoubleClick" />
+                          fill="#eef0e3" @onclick="OnCanvasClick" @ondblclick="OnCanvasDoubleClick" />
                     <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
                           fill="url(#designGrid)" pointer-events="none" />
                     <rect x="0" y="0" width="@S(_design.WidthMetres)" height="@S(_design.HeightMetres)"
-                          fill="none" stroke="#2c6330" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none" />
+                          fill="none" stroke="#c9cdb9" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none" />
 
                     @* Sprinkler coverage circles render behind everything else. *@
                     @foreach (var sprinkler in _design.Sprinklers)
@@ -185,7 +185,7 @@ else
                 <div class="zone-designer-input">
                     <label>@input.Label</label>
                     <span>
-                        <input type="number" class="form-input zone-designer-input__field" step="any"
+                        <input type="number" class="zone-designer-input__field" step="any"
                                value="@S(input.Get())"
                                @onchange="e => OnInputChanged(input, e)" />
                         <span class="zone-designer-input__unit">@input.Unit</span>
