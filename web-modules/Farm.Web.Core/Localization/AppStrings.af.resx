@@ -370,4 +370,52 @@
   <data name="CalculationHistory_Outputs" xml:space="preserve">
     <value>Uitvoer</value>
   </data>
+  <data name="ZoneOverview_BackToZones" xml:space="preserve">
+    <value>&#8592; Alle sones</value>
+  </data>
+  <data name="ZoneOverview_Eyebrow" xml:space="preserve">
+    <value>Sone</value>
+  </data>
+  <data name="ZoneOverview_NotFound" xml:space="preserve">
+    <value>Sone nie gevind nie.</value>
+  </data>
+  <data name="ZoneOverview_Edit" xml:space="preserve">
+    <value>Wysig</value>
+  </data>
+  <data name="ZoneOverview_DoCalculations" xml:space="preserve">
+    <value>Doen berekeninge &#8594;</value>
+  </data>
+  <data name="ZoneOverview_Field" xml:space="preserve">
+    <value>Kamp</value>
+  </data>
+  <data name="ZoneOverview_Crop" xml:space="preserve">
+    <value>Gewas</value>
+  </data>
+  <data name="ZoneOverview_Area" xml:space="preserve">
+    <value>Oppervlakte</value>
+  </data>
+  <data name="ZoneOverview_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ZoneOverview_LastWatered" xml:space="preserve">
+    <value>Laas natgelei</value>
+  </data>
+  <data name="ZoneOverview_LastWatered_Never" xml:space="preserve">
+    <value>Nooit</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign" xml:space="preserve">
+    <value>Besproeiingsontwerp</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign_NotStarted" xml:space="preserve">
+    <value>Nie begin nie</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign_Placeholder" xml:space="preserve">
+    <value>Nog geen besproeiingsuitleg nie &#8212; gebruik "Doen berekeninge" om pype te teken, 'n pomp en sproeiers by te voeg.</value>
+  </data>
+  <data name="ZoneOverview_History" xml:space="preserve">
+    <value>Verslae en geskiedenis</value>
+  </data>
+  <data name="ZoneOverview_History_Body" xml:space="preserve">
+    <value>Bekyk hierdie sone se gelogde berekeningslopies.</value>
+  </data>
 </root>

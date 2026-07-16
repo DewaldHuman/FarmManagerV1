@@ -9,7 +9,7 @@ Living roadmap and task tracker. Update this as work happens — check off tasks
 - **Active phase:** Phase 1 — Foundation + Irrigation
 - **Last updated:** 2026-07-15
 - **Blockers:** none
-- **Just landed:** Real `Zone.status` computation via a manual per-zone irrigation interval — see Decisions Log
+- **Just landed:** Zone Overview landing page between the zone list and the calculator flow — see Decisions Log
 
 ---
 
@@ -36,6 +36,7 @@ Goal: running end-to-end on the farm PC via Docker Compose — auth, farm/field/
 - [x] Irrigation: wire `RunCalculator.razor` to read the `?zone={id}` query param (already passed by Zone List's card click) — shows a "Logging against: {zone}" banner; a zone `<select>` fallback appears when navigated to directly without the param
 - [x] Irrigation: wire the ET₀ Run-Time and Crop Water Need calculators (the only two using the Kc dropdown) to Core Settings' Kc defaults instead of the hardcoded `Farm.Irrigation.Calculators/Presets.cs` constants, now that `GET /api/v1/core/settings` exists — the other 25 calculators are unaffected
 - [x] Core: real `Zone.status` computation (on schedule / due / overdue) — manual per-zone `irrigation_interval_days` (optional, set in `ZoneForm.razor`) compared against the zone's most recent logged `CalculationRun` (falling back to `zone.created_at` if never run). Auto-computed intervals from weather/soil/crop water balance remain future work (the real `Schedule` model)
+- [x] Irrigation: Zone Overview landing page (`ZoneOverview.razor` at `/irrigation/zones/{id}`) between the Zone List and the calculator flow — status/field/crop/area/last-watered detail card, Edit shortcut, "Do calculations" entry, and a real link into Calculation History; "Zone Designs" NavMenu link stays a dead link, not built
 - [ ] Seed script with real farm's fields/zones
 - [ ] Docker Compose running locally, accessible over LAN
 - [ ] Backup script (`pg_dump` on schedule)
@@ -76,6 +77,16 @@ Goal: running end-to-end on the farm PC via Docker Compose — auth, farm/field/
 ## Decisions Log
 
 > One line per significant decision, newest first. If a decision needs more explanation, link to a file in `docs/decisions/`.
+
+- 2026-07-15 — **Zone Overview landing page.** New `ZoneOverview.razor` (`Farm.Web.Core/Pages/`) at `/irrigation/zones/{Id:guid}`, sitting between the Zone List and the calculator flow, per a UI mockup: eyebrow/name/status pill/field·crop subtitle, an Edit button (→ existing `/farm/zones/{id}/edit`), a "Do calculations →" button (→ existing `/irrigation/run-calculator?zone={id}`, unchanged), a details card (Field/Crop/Area/Status/Last watered/Irrigation design), and two right-column cards: a static "Irrigation design" placeholder (no real design/canvas feature exists — "Not started" is literal, not computed) and a "Reports and history" card that's a **real** link into `/irrigation/history?zone={id}` (deliberate choice — no reason to hide the already-working Calculation History behind an inert placeholder just because the mockup showed one).
+
+  **"Last watered" needed no backend changes** — derived client-side from `IIrrigationService.ListCalculationRunsAsync(zoneId)` (already sorted newest-first), taking the first run's `CreatedAt` or falling back to a literal "Never" string when empty.
+
+  **Navigation changes:** `ZoneList.razor`'s card click now goes to the Overview (`GoToOverview`) instead of straight into the calculator (`GoToRunCalculator` removed, was becoming dead code); the "View history" link on each card is untouched. `RunCalculator.razor`'s `BackToPicker()` is now zone-aware: when arrived with a `?zone=` query param (i.e. via the Overview's "Do calculations" button), the back button — on both the initial calculator-picker screen and from inside a selected calculator's detail view — navigates to `/irrigation/zones/{id}` instead of resetting to the in-page calculator grid; the button label switches between "← Back to zone overview" and the original "← Choose a different calculator" based on the same check. The non-zone-scoped flow (navigating to `/irrigation/run-calculator` directly, no query param) is fully unchanged — confirmed via regression check.
+
+  **Explicitly out of scope, per user instruction:** "Zone Designs" (`/irrigation/zone-designs`) — confirmed via code search to have zero backing page anywhere in the repo, a genuine dead NavMenu link — stays exactly that; not built, not referenced by the new page (the mockup's "← All zone designs" back button became "← All zones" → `/irrigation/zones` instead).
+
+  Browser-verified: Zone List card click → lands on the new Overview (not the old direct-to-calculator jump) → name/pill/field/crop/area/last-watered all correct (a real timestamp for a zone with prior logged runs, "Never" for one with none) → Edit opens the existing edit form → "Reports and history" card deep-links into real Calculation History → "Do calculations" opens the calculator picker with the zone banner shown, "← Back to zone overview" visible even before picking a calculator, and correctly returns to the Overview both from the picker screen and from inside a selected calculator's detail view → direct navigation to `/irrigation/run-calculator` (no zone) confirmed fully unregressed (old label/behavior intact) → full EN/AF check on the new page.
 
 - 2026-07-15 — **Real Zone.status via manual per-zone irrigation interval.** `ZoneRead.status` had been a hardcoded `"on-schedule"` placeholder since Farm/Field/Zone was first built, always flagged as blocked on "Irrigation's schedule model" — that model (auto-computed intervals from weather + soil data) is still real future work, but a much smaller manual version is now buildable since `CalculationRun` exists.
 

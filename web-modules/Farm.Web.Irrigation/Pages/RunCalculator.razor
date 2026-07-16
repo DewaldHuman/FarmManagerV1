@@ -3,12 +3,18 @@
 @using System.Globalization
 @inject IFarmService FarmService
 @inject IIrrigationService IrrigationService
+@inject NavigationManager Nav
 
 <div class="app-shell__eyebrow">Irrigation</div>
 <h1 class="app-shell__title calc-title">Run calculation</h1>
 
 @if (_selected is null)
 {
+    @if (ZoneId is not null)
+    {
+        <button class="calc-back-btn" @onclick="BackToPicker">← Back to zone overview</button>
+    }
+
     <div class="calc-picker-intro">Choose a calculator</div>
 
     @foreach (var category in _categories)
@@ -29,7 +35,7 @@
 }
 else
 {
-    <button class="calc-back-btn" @onclick="BackToPicker">← Choose a different calculator</button>
+    <button class="calc-back-btn" @onclick="BackToPicker">@(ZoneId is not null ? "← Back to zone overview" : "← Choose a different calculator")</button>
 
     @if (_zoneName is not null)
     {
@@ -276,6 +282,12 @@ else
 
     private void BackToPicker()
     {
+        if (ZoneId is not null)
+        {
+            Nav.NavigateTo($"/irrigation/zones/{ZoneId}");
+            return;
+        }
+
         _selected = null;
         _result = null;
         _error = null;

@@ -1,0 +1,121 @@
+@page "/irrigation/zones/{Id:guid}"
+@layout AppShellLayout
+@attribute [Authorize]
+@using System.Globalization
+@inject IFarmService FarmService
+@inject IIrrigationService IrrigationService
+@inject IStringLocalizer<AppStrings> Localizer
+@inject NavigationManager Nav
+
+<button class="calc-back-btn" @onclick="GoToZoneList">@Localizer["ZoneOverview_BackToZones"]</button>
+
+@if (_loading)
+{
+    <p>@Localizer["Common_Loading"]</p>
+}
+else if (_zone is null)
+{
+    <p class="page-subtitle">@Localizer["ZoneOverview_NotFound"]</p>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <div class="app-shell__eyebrow">@Localizer["ZoneOverview_Eyebrow"]</div>
+            <h1 class="app-shell__title">@_zone.Name</h1>
+            <div class="zone-overview-subtitle">
+                <span class="pill @StatusPillClass(_zone.Status)">@StatusLabel(_zone.Status)</span>
+                <span>@_zone.FieldName @(string.IsNullOrWhiteSpace(_zone.Crop) ? "" : $"· {_zone.Crop}")</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary" @onclick="GoToEdit">@Localizer["ZoneOverview_Edit"]</button>
+            <button class="btn btn-primary" @onclick="GoToCalculations">@Localizer["ZoneOverview_DoCalculations"]</button>
+        </div>
+    </div>
+
+    <div class="zone-overview-layout">
+        <div class="card zone-overview-details">
+            <div class="zone-overview-details__row">
+                <span>@Localizer["ZoneOverview_Field"]</span>
+                <strong>@_zone.FieldName</strong>
+            </div>
+            <div class="zone-overview-details__row">
+                <span>@Localizer["ZoneOverview_Crop"]</span>
+                <strong>@_zone.Crop</strong>
+            </div>
+            <div class="zone-overview-details__row">
+                <span>@Localizer["ZoneOverview_Area"]</span>
+                <strong>@_zone.AreaHa.ToString("0.##") @Localizer["Common_Hectares"]</strong>
+            </div>
+            <div class="zone-overview-details__row">
+                <span>@Localizer["ZoneOverview_Status"]</span>
+                <strong>@StatusLabel(_zone.Status)</strong>
+            </div>
+            <div class="zone-overview-details__row">
+                <span>@Localizer["ZoneOverview_LastWatered"]</span>
+                <strong>@_lastWatered</strong>
+            </div>
+            <div class="zone-overview-details__row">
+                <span>@Localizer["ZoneOverview_IrrigationDesign"]</span>
+                <strong>@Localizer["ZoneOverview_IrrigationDesign_NotStarted"]</strong>
+            </div>
+        </div>
+
+        <div>
+            <div class="zone-overview-placeholder-card">
+                <div class="zone-overview-placeholder-card__title">@Localizer["ZoneOverview_IrrigationDesign"]</div>
+                <div class="zone-overview-placeholder-card__body">@Localizer["ZoneOverview_IrrigationDesign_Placeholder"]</div>
+            </div>
+
+            <div class="zone-overview-placeholder-card zone-overview-placeholder-card--link" @onclick="GoToHistory">
+                <div class="zone-overview-placeholder-card__title">@Localizer["ZoneOverview_History"]</div>
+                <div class="zone-overview-placeholder-card__body">@Localizer["ZoneOverview_History_Body"]</div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ZoneDto? _zone;
+    private string _lastWatered = string.Empty;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _zone = await FarmService.GetZoneAsync(Id);
+        if (_zone is not null)
+        {
+            var runs = await IrrigationService.ListCalculationRunsAsync(Id);
+            _lastWatered = runs.Count > 0
+                ? runs[0].CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
+                : Localizer["ZoneOverview_LastWatered_Never"];
+        }
+
+        _loading = false;
+    }
+
+    private void GoToZoneList() => Nav.NavigateTo("/irrigation/zones");
+
+    private void GoToEdit() => Nav.NavigateTo($"/farm/zones/{Id}/edit");
+
+    private void GoToCalculations() => Nav.NavigateTo($"/irrigation/run-calculator?zone={Id}");
+
+    private void GoToHistory() => Nav.NavigateTo($"/irrigation/history?zone={Id}");
+
+    private string StatusPillClass(string status) => status switch
+    {
+        "due" => "pill-due",
+        "overdue" => "pill-overdue",
+        _ => "pill-ok",
+    };
+
+    private string StatusLabel(string status) => status switch
+    {
+        "due" => Localizer["ZoneList_Status_Due"],
+        "overdue" => Localizer["ZoneList_Status_Overdue"],
+        _ => Localizer["ZoneList_Status_OnSchedule"],
+    };
+}

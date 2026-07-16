@@ -26,7 +26,7 @@ else
     <div class="zone-grid">
         @foreach (var zone in _zones)
         {
-            <div class="zone-card" @onclick="() => GoToRunCalculator(zone.Id)">
+            <div class="zone-card" @onclick="() => GoToOverview(zone.Id)">
                 <div class="zone-card__header">
                     <div>
                         <div class="zone-card__name">@zone.Name</div>
@@ -59,7 +59,7 @@ else
 
     private void GoToFarmStructure() => Nav.NavigateTo("/farm/fields");
 
-    private void GoToRunCalculator(Guid zoneId) => Nav.NavigateTo($"/irrigation/run-calculator?zone={zoneId}");
+    private void GoToOverview(Guid zoneId) => Nav.NavigateTo($"/irrigation/zones/{zoneId}");
 
     private void GoToHistory(Guid zoneId) => Nav.NavigateTo($"/irrigation/history?zone={zoneId}");
 

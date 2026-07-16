@@ -370,4 +370,52 @@
   <data name="CalculationHistory_Outputs" xml:space="preserve">
     <value>Outputs</value>
   </data>
+  <data name="ZoneOverview_BackToZones" xml:space="preserve">
+    <value>&#8592; All zones</value>
+  </data>
+  <data name="ZoneOverview_Eyebrow" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="ZoneOverview_NotFound" xml:space="preserve">
+    <value>Zone not found.</value>
+  </data>
+  <data name="ZoneOverview_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="ZoneOverview_DoCalculations" xml:space="preserve">
+    <value>Do calculations &#8594;</value>
+  </data>
+  <data name="ZoneOverview_Field" xml:space="preserve">
+    <value>Field</value>
+  </data>
+  <data name="ZoneOverview_Crop" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="ZoneOverview_Area" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="ZoneOverview_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ZoneOverview_LastWatered" xml:space="preserve">
+    <value>Last watered</value>
+  </data>
+  <data name="ZoneOverview_LastWatered_Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign" xml:space="preserve">
+    <value>Irrigation design</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign_NotStarted" xml:space="preserve">
+    <value>Not started</value>
+  </data>
+  <data name="ZoneOverview_IrrigationDesign_Placeholder" xml:space="preserve">
+    <value>No irrigation layout yet &#8212; use "Do calculations" to draw pipes, add a pump and sprinklers.</value>
+  </data>
+  <data name="ZoneOverview_History" xml:space="preserve">
+    <value>Reports and history</value>
+  </data>
+  <data name="ZoneOverview_History_Body" xml:space="preserve">
+    <value>View this zone's logged calculation runs.</value>
+  </data>
 </root>
