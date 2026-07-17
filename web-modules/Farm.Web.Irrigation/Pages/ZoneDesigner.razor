@@ -31,11 +31,11 @@ else
         <div class="zone-designer-size">
             <label>Width (m)
                 <input type="number" class="zone-designer-size__input" min="10" step="1"
-                       @bind="_design.WidthMetres" @bind:after="SaveDesignAsync" />
+                       @bind="_design.WidthMetres" @bind:after="MarkDirty" />
             </label>
             <label>Height (m)
                 <input type="number" class="zone-designer-size__input" min="10" step="1"
-                       @bind="_design.HeightMetres" @bind:after="SaveDesignAsync" />
+                       @bind="_design.HeightMetres" @bind:after="MarkDirty" />
             </label>
         </div>
     </div>
@@ -179,6 +179,54 @@ else
         </div>
 
         <div class="zone-designer-panel">
+            <div class="card zone-designer-save">
+                <div class="zone-designer-save__status">
+                    @if (_dirty)
+                    {
+                        <span class="zone-designer-save__dot"></span>
+                        <span>Unsaved changes</span>
+                    }
+                    else if (_lastSavedAt is not null)
+                    {
+                        <span>Saved @_lastSavedAt.Value.ToLocalTime().ToString("dd/MM HH:mm", CultureInfo.InvariantCulture)</span>
+                    }
+                    else
+                    {
+                        <span>New design — not saved yet</span>
+                    }
+                </div>
+                <div class="zone-designer-save__actions">
+                    <input class="zone-designer-input__field zone-designer-save__name" placeholder="Version name (optional)" @bind="_saveName" />
+                    <button class="btn btn-primary zone-designer-save__btn" @onclick="SaveVersionAsync" disabled="@_saving">Save</button>
+                    @if (_dirty)
+                    {
+                        <button class="btn btn-secondary zone-designer-save__btn" @onclick="DiscardAsync">Discard</button>
+                    }
+                </div>
+                @if (_saveFailed)
+                {
+                    <div class="zone-designer-save__error">Save failed — try again.</div>
+                }
+                @if (_versions.Count > 0)
+                {
+                    <button class="zone-designer-inspector__reset" @onclick="() => _showHistory = !_showHistory">
+                        @(_showHistory ? "Hide history" : $"History ({_versions.Count})")
+                    </button>
+                    @if (_showHistory)
+                    {
+                        <div class="zone-designer-versions">
+                            @foreach (var version in _versions)
+                            {
+                                <div class="zone-designer-versions__row @(version.Id == _loadedVersionId ? "zone-designer-versions__row--current" : "")">
+                                    <span>@(string.IsNullOrEmpty(version.Name) ? "Unnamed" : version.Name) · @version.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm", CultureInfo.InvariantCulture)</span>
+                                    <button class="zone-designer-inspector__reset" @onclick="() => LoadVersionAsync(version.Id)">Load</button>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+
             @if (_session.Selected is not null)
             {
                 <div class="card zone-designer-inspector">
@@ -335,6 +383,17 @@ else
     private readonly ZoneDesignerSession _session = new();
     private DesignEvaluation _eval = ZoneDesignEvaluator.Evaluate(new ZoneDesign());
 
+    // Save/versions state: edits stay local (playground) until an explicit Save
+    // creates a new immutable version; Discard reloads the latest saved one.
+    private bool _dirty;
+    private bool _saving;
+    private bool _saveFailed;
+    private bool _showHistory;
+    private string _saveName = "";
+    private DateTimeOffset? _lastSavedAt;
+    private Guid? _loadedVersionId;
+    private List<DesignVersionInfo> _versions = new();
+
     private ZoneDesign _design => _session.Design;
 
     // Status lets a global input reflect per-element overrides on the canvas:
@@ -352,40 +411,43 @@ else
         _zone = await FarmService.GetZoneAsync(Id);
         if (_zone is not null)
         {
-            _session.Design = await DesignStore.GetAsync(Id) ?? new ZoneDesign();
+            _session.Design = await DesignStore.GetLatestAsync(Id) ?? new ZoneDesign();
+            _versions = await DesignStore.ListVersionsAsync(Id);
+            _lastSavedAt = _versions.FirstOrDefault()?.CreatedAt;
+            _loadedVersionId = _versions.FirstOrDefault()?.Id;
         }
-
-        var inputs = _design.Inputs;
 
         (bool Disabled, string? Note) GroupStatus(int overridden, int total) =>
             total == 0 || overridden == 0 ? (false, null)
             : overridden == total ? (true, "set on canvas")
             : (false, $"{overridden} of {total} custom");
 
+        // Note: lambdas read _design.Inputs dynamically (not a captured instance)
+        // so Load/Discard swapping the working design keeps the rows live.
         _inputRows = new List<InputRow>
         {
-            new("Pump flow", "L/min", () => inputs.PumpFlowLitresPerMinute, v => inputs.PumpFlowLitresPerMinute = v,
+            new("Pump flow", "L/min", () => _design.Inputs.PumpFlowLitresPerMinute, v => _design.Inputs.PumpFlowLitresPerMinute = v,
                 Status: () => _design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump)?.RatedFlowLitresPerMinute is not null
                     ? (true, "set on pump") : (false, null)),
-            new("Pump pressure", "bar", () => inputs.PumpPressureBar, v => inputs.PumpPressureBar = v,
+            new("Pump pressure", "bar", () => _design.Inputs.PumpPressureBar, v => _design.Inputs.PumpPressureBar = v,
                 Status: () => _design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump)?.RatedPressureBar is not null
                     ? (true, "set on pump") : (false, null)),
-            new("Main pipe diameter", "mm", () => inputs.MainDiameterMm, v => inputs.MainDiameterMm = v,
+            new("Main pipe diameter", "mm", () => _design.Inputs.MainDiameterMm, v => _design.Inputs.MainDiameterMm = v,
                 Status: () => _design.Pipes.FirstOrDefault(p => p.IsMain)?.DiameterMm is not null
                     ? (true, "set on canvas") : (false, null)),
-            new("Lateral pipe diameter", "mm", () => inputs.LateralDiameterMm, v => inputs.LateralDiameterMm = v,
+            new("Lateral pipe diameter", "mm", () => _design.Inputs.LateralDiameterMm, v => _design.Inputs.LateralDiameterMm = v,
                 Status: () => GroupStatus(_design.Pipes.Count(p => !p.IsMain && p.DiameterMm is not null), _design.Pipes.Count(p => !p.IsMain))),
-            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v,
+            new("Sprinkler count", "", () => _design.Inputs.SprinklerCount, v => _design.Inputs.SprinklerCount = (int)v,
                 Status: () => _design.Sprinklers.Count > 0 ? (true, "from canvas") : (false, null),
                 CanvasValue: () => _design.Sprinklers.Count.ToString(CultureInfo.InvariantCulture)),
-            new("Sprinkler flow (each)", "L/hr", () => inputs.SprinklerFlowLitresPerHour, v => inputs.SprinklerFlowLitresPerHour = v,
+            new("Sprinkler flow (each)", "L/hr", () => _design.Inputs.SprinklerFlowLitresPerHour, v => _design.Inputs.SprinklerFlowLitresPerHour = v,
                 Status: () => GroupStatus(_design.Sprinklers.Count(s => s.FlowLitresPerHour is not null), _design.Sprinklers.Count)),
-            new("Sprinkler spacing", "m", () => inputs.SprinklerSpacingMetres, v => inputs.SprinklerSpacingMetres = v,
+            new("Sprinkler spacing", "m", () => _design.Inputs.SprinklerSpacingMetres, v => _design.Inputs.SprinklerSpacingMetres = v,
                 Status: () => _design.Sprinklers.Count >= 2 ? (true, "from canvas") : (false, null),
-                CanvasValue: () => F1(_eval.Results?.EffectiveSpacingMetres ?? inputs.SprinklerSpacingMetres)),
-            new("Sprinkler radius", "m", () => inputs.SprinklerRadiusMetres, v => inputs.SprinklerRadiusMetres = v,
+                CanvasValue: () => F1(_eval.Results?.EffectiveSpacingMetres ?? _design.Inputs.SprinklerSpacingMetres)),
+            new("Sprinkler radius", "m", () => _design.Inputs.SprinklerRadiusMetres, v => _design.Inputs.SprinklerRadiusMetres = v,
                 Status: () => GroupStatus(_design.Sprinklers.Count(s => s.RadiusMetres is not null), _design.Sprinklers.Count)),
-            new("Target depth", "mm", () => inputs.TargetDepthMm, v => inputs.TargetDepthMm = v),
+            new("Target depth", "mm", () => _design.Inputs.TargetDepthMm, v => _design.Inputs.TargetDepthMm = v),
         };
 
         Recompute();
@@ -396,38 +458,83 @@ else
 
     private void Recompute() => _eval = ZoneDesignEvaluator.Evaluate(_design);
 
-    private async Task SaveDesignAsync()
+    // Edits are local-only (playground); persistence happens on explicit Save.
+    private void MarkDirty()
     {
         Recompute();
-        await DesignStore.SaveAsync(Id, _design);
+        _dirty = true;
     }
 
-    private async Task SaveIfChangedAsync(bool changed)
+    private void MarkDirtyIfChanged(bool changed)
     {
         if (changed)
         {
-            await SaveDesignAsync();
+            MarkDirty();
         }
+    }
+
+    private async Task SaveVersionAsync()
+    {
+        _saving = true;
+        _saveFailed = false;
+        var info = await DesignStore.SaveVersionAsync(Id, _design, _saveName);
+        _saving = false;
+        if (info is null)
+        {
+            _saveFailed = true;
+            return;
+        }
+
+        _versions.Insert(0, info);
+        _loadedVersionId = info.Id;
+        _lastSavedAt = info.CreatedAt;
+        _dirty = false;
+        _saveName = "";
+    }
+
+    private async Task DiscardAsync()
+    {
+        _session.Design = await DesignStore.GetLatestAsync(Id) ?? new ZoneDesign();
+        _session.ClearSelection();
+        _loadedVersionId = _versions.FirstOrDefault()?.Id;
+        _dirty = false;
+        Recompute();
+    }
+
+    private async Task LoadVersionAsync(Guid designId)
+    {
+        var design = await DesignStore.GetVersionAsync(designId);
+        if (design is null)
+        {
+            return;
+        }
+
+        _session.Design = design;
+        _session.ClearSelection();
+        _loadedVersionId = designId;
+        // Loading anything but the latest is a working copy — restore by saving.
+        _dirty = designId != _versions.FirstOrDefault()?.Id;
+        Recompute();
     }
 
     // ---- Pointer adapters (pixels → metres → session) ----
 
     private string ToolClass(DesignerTool tool) => _session.Tool == tool ? "zone-designer-tool--active" : "";
 
-    private async Task SetToolAsync(DesignerTool tool) => await SaveIfChangedAsync(_session.SetTool(tool));
+    private void SetToolAsync(DesignerTool tool) => MarkDirtyIfChanged(_session.SetTool(tool));
 
-    private async Task OnCanvasClick(MouseEventArgs e) =>
-        await SaveIfChangedAsync(_session.CanvasClick(e.OffsetX / PxPerMetre, e.OffsetY / PxPerMetre));
+    private void OnCanvasClick(MouseEventArgs e) =>
+        MarkDirtyIfChanged(_session.CanvasClick(e.OffsetX / PxPerMetre, e.OffsetY / PxPerMetre));
 
-    private async Task OnCanvasDoubleClick(MouseEventArgs e) => await SaveIfChangedAsync(_session.CanvasDoubleClick());
+    private void OnCanvasDoubleClick(MouseEventArgs e) => MarkDirtyIfChanged(_session.CanvasDoubleClick());
 
     private void OnDragMove(MouseEventArgs e) => _session.DragMove(e.OffsetX / PxPerMetre, e.OffsetY / PxPerMetre);
 
-    private async Task OnDragEnd() => await SaveIfChangedAsync(_session.DragEnd());
+    private void OnDragEnd() => MarkDirtyIfChanged(_session.DragEnd());
 
-    private async Task RemoveSelectedAsync() => await SaveIfChangedAsync(_session.RemoveSelected());
+    private void RemoveSelectedAsync() => MarkDirtyIfChanged(_session.RemoveSelected());
 
-    private async Task TogglePipeMainAsync() => await SaveIfChangedAsync(_session.TogglePipeMain());
+    private void TogglePipeMainAsync() => MarkDirtyIfChanged(_session.TogglePipeMain());
 
     // ---- Inspector ----
 
@@ -521,7 +628,7 @@ else
         };
     }
 
-    private async Task OnPropChanged(EditableProp prop, ChangeEventArgs e)
+    private void OnPropChanged(EditableProp prop, ChangeEventArgs e)
     {
         if (double.TryParse(e.Value as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && value > 0)
         {
@@ -534,7 +641,7 @@ else
             prop.Clear();
         }
 
-        await SaveDesignAsync();
+        MarkDirty();
     }
 
     private bool SelectedHasOverrides() => _session.Selected switch
@@ -545,7 +652,7 @@ else
         _ => false,
     };
 
-    private async Task ResetSelectedOverridesAsync()
+    private void ResetSelectedOverridesAsync()
     {
         switch (_session.Selected)
         {
@@ -562,15 +669,15 @@ else
                 break;
         }
 
-        await SaveDesignAsync();
+        MarkDirty();
     }
 
-    private async Task OnInputChanged(InputRow input, ChangeEventArgs e)
+    private void OnInputChanged(InputRow input, ChangeEventArgs e)
     {
         if (double.TryParse(e.Value as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
         {
             input.Set(value);
-            await SaveDesignAsync();
+            MarkDirty();
         }
     }
 

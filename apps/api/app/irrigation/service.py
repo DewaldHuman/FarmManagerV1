@@ -5,8 +5,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core import service as core_service
-from app.irrigation.models import CalculationRun
-from app.irrigation.schemas import CalculationRunCreate
+from app.irrigation.models import CalculationRun, ZoneDesignVersion
+from app.irrigation.schemas import CalculationRunCreate, ZoneDesignVersionCreate
 
 
 def _run_to_read_kwargs(run: CalculationRun, zone_name: str) -> dict:
@@ -51,6 +51,55 @@ def list_calculation_runs(db: Session, zone_id: uuid.UUID) -> list[dict]:
         .all()
     )
     return [_run_to_read_kwargs(run, zone["name"]) for run in runs]
+
+
+def create_design_version(
+    db: Session, zone_id: uuid.UUID, payload: ZoneDesignVersionCreate, created_by: uuid.UUID
+) -> ZoneDesignVersion:
+    zone = core_service.get_zone(db, zone_id)
+    if zone is None:
+        raise ValueError("Zone not found")
+
+    version = ZoneDesignVersion(
+        zone_id=zone_id,
+        name=payload.name,
+        design=payload.design,
+        created_by=created_by,
+    )
+    db.add(version)
+    db.commit()
+    db.refresh(version)
+    return version
+
+
+def list_design_versions(db: Session, zone_id: uuid.UUID) -> list[ZoneDesignVersion]:
+    zone = core_service.get_zone(db, zone_id)
+    if zone is None:
+        raise ValueError("Zone not found")
+
+    return (
+        db.query(ZoneDesignVersion)
+        .filter(ZoneDesignVersion.zone_id == zone_id)
+        .order_by(ZoneDesignVersion.created_at.desc())
+        .all()
+    )
+
+
+def get_latest_design(db: Session, zone_id: uuid.UUID) -> ZoneDesignVersion | None:
+    zone = core_service.get_zone(db, zone_id)
+    if zone is None:
+        raise ValueError("Zone not found")
+
+    return (
+        db.query(ZoneDesignVersion)
+        .filter(ZoneDesignVersion.zone_id == zone_id)
+        .order_by(ZoneDesignVersion.created_at.desc())
+        .first()
+    )
+
+
+def get_design_version(db: Session, design_id: uuid.UUID) -> ZoneDesignVersion | None:
+    return db.query(ZoneDesignVersion).filter(ZoneDesignVersion.id == design_id).first()
 
 
 def get_last_run_at_by_zone(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, datetime]:

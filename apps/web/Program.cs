@@ -51,11 +51,13 @@ builder.Services.AddHttpClient<Farm.Web.Core.Irrigation.IIrrigationService, Farm
     client.BaseAddress = new Uri(apiBaseUrl);
 }).AddHttpMessageHandler<AuthTokenHandler>();
 
-// Zone Designer's in-memory design store — also lives in Farm.Web.Core (see
-// note above re: lazy assemblies) because ZoneOverview.razor reads design
-// status. Singleton so drawn layouts survive in-app navigation; swap for an
-// HTTP-backed implementation when backend persistence lands.
-builder.Services.AddSingleton<Farm.Web.Core.Irrigation.IZoneDesignStore, Farm.Web.Core.Irrigation.InMemoryZoneDesignStore>();
+// Zone Designer's design store — backend-persisted (versioned saves under
+// irrigation.zone_design_versions). Lives in Farm.Web.Core (see note above
+// re: lazy assemblies) because ZoneOverview.razor reads design status.
+builder.Services.AddHttpClient<Farm.Web.Core.Irrigation.IZoneDesignStore, Farm.Web.Core.Irrigation.HttpZoneDesignStore>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 var host = builder.Build();
 

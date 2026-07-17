@@ -23,3 +23,22 @@ class CalculationRunRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ZoneDesignVersionCreate(BaseModel):
+    name: str | None = None
+    # The client's serialized ZoneDesign — opaque to the backend.
+    design: dict
+
+
+class ZoneDesignVersionInfo(BaseModel):
+    id: uuid.UUID
+    zone_id: uuid.UUID
+    name: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ZoneDesignVersionRead(ZoneDesignVersionInfo):
+    design: dict
