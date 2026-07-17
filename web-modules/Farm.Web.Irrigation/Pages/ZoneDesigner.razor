@@ -249,7 +249,7 @@ else
                     <span>
                         <input type="number" class="zone-designer-input__field" step="any"
                                disabled="@status.Disabled"
-                               value="@(input.IsCount && status.Disabled ? _design.Sprinklers.Count.ToString(CultureInfo.InvariantCulture) : S(input.Get()))"
+                               value="@(status.Disabled && input.CanvasValue is not null ? input.CanvasValue() : S(input.Get()))"
                                @onchange="e => OnInputChanged(input, e)" />
                         <span class="zone-designer-input__unit">@(status.Note ?? input.Unit)</span>
                     </span>
@@ -308,7 +308,7 @@ else
                 <div class="zone-designer-result">
                     <div>
                         <div>Application rate</div>
-                        <div class="zone-designer-result__sub">from spacing @F0(_design.Inputs.SprinklerSpacingMetres)m</div>
+                        <div class="zone-designer-result__sub">@(_results.SpacingFromCanvas ? $"avg canvas spacing {F1(_results.EffectiveSpacingMetres)} m" : $"from spacing {F0(_design.Inputs.SprinklerSpacingMetres)}m")</div>
                     </div>
                     <strong>@F1(_results.ApplicationRateMmPerHour) mm/hr</strong>
                 </div>
@@ -351,10 +351,12 @@ else
     private DesignResults? _results;
 
     // Status lets a global input reflect per-element overrides on the canvas:
-    // disabled with a note when fully taken over, a "k of n custom" note when partial.
+    // disabled with a note when fully taken over, a "k of n custom" note when
+    // partial. CanvasValue supplies the displayed value while disabled (e.g. the
+    // placed count, or the layout's derived spacing).
     private sealed record InputRow(
         string Label, string Unit, Func<double> Get, Action<double> Set,
-        bool IsCount = false, Func<(bool Disabled, string? Note)>? Status = null);
+        Func<(bool Disabled, string? Note)>? Status = null, Func<string>? CanvasValue = null);
 
     private List<InputRow> _inputRows = new();
 
@@ -386,11 +388,14 @@ else
                     ? (true, "set on canvas") : (false, null)),
             new("Lateral pipe diameter", "mm", () => inputs.LateralDiameterMm, v => inputs.LateralDiameterMm = v,
                 Status: () => GroupStatus(_design.Pipes.Count(p => !p.IsMain && p.DiameterMm is not null), _design.Pipes.Count(p => !p.IsMain))),
-            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v, IsCount: true,
-                Status: () => _design.Sprinklers.Count > 0 ? (true, "from canvas") : (false, null)),
+            new("Sprinkler count", "", () => inputs.SprinklerCount, v => inputs.SprinklerCount = (int)v,
+                Status: () => _design.Sprinklers.Count > 0 ? (true, "from canvas") : (false, null),
+                CanvasValue: () => _design.Sprinklers.Count.ToString(CultureInfo.InvariantCulture)),
             new("Sprinkler flow (each)", "L/hr", () => inputs.SprinklerFlowLitresPerHour, v => inputs.SprinklerFlowLitresPerHour = v,
                 Status: () => GroupStatus(_design.Sprinklers.Count(s => s.FlowLitresPerHour is not null), _design.Sprinklers.Count)),
-            new("Sprinkler spacing", "m", () => inputs.SprinklerSpacingMetres, v => inputs.SprinklerSpacingMetres = v),
+            new("Sprinkler spacing", "m", () => inputs.SprinklerSpacingMetres, v => inputs.SprinklerSpacingMetres = v,
+                Status: () => _design.Sprinklers.Count >= 2 ? (true, "from canvas") : (false, null),
+                CanvasValue: () => F1(_results?.EffectiveSpacingMetres ?? inputs.SprinklerSpacingMetres)),
             new("Sprinkler radius", "m", () => inputs.SprinklerRadiusMetres, v => inputs.SprinklerRadiusMetres = v,
                 Status: () => GroupStatus(_design.Sprinklers.Count(s => s.RadiusMetres is not null), _design.Sprinklers.Count)),
             new("Target depth", "mm", () => inputs.TargetDepthMm, v => inputs.TargetDepthMm = v),
@@ -729,7 +734,7 @@ else
             case DesignSprinkler:
                 return new()
                 {
-                    ("Spacing", $"{F1(inputs.SprinklerSpacingMetres)} m"),
+                    ("Spacing", $"{F1(_results?.EffectiveSpacingMetres ?? inputs.SprinklerSpacingMetres)} m"),
                 };
             case DesignPoint point when point.Kind == DesignPointKind.Pump:
                 return new();
@@ -863,7 +868,9 @@ else
         double RunTimeMinutes,
         int MaxSprinklers,
         double AvgSprinklerFlowLitresPerHour,
-        double PumpFlowLitresPerMinute);
+        double PumpFlowLitresPerMinute,
+        double EffectiveSpacingMetres,
+        bool SpacingFromCanvas);
 
     private const double LitresPerMinuteToM3PerHour = 0.06;
     private const double SprinklerHeadPressureBar = 2.0;
@@ -1038,10 +1045,18 @@ else
 
         var frictionBar = frictionKpa / 100;
 
-        // Application rate/runtime follow the average effective sprinkler flow
-        // (equals the input when nothing is overridden or in planning mode).
+        // Application rate/runtime/coverage follow the layout: average effective
+        // sprinkler flow, and (with ≥2 heads placed) the mean nearest-neighbour
+        // spacing of the placed heads — equal to the grid spacing on a uniform
+        // grid. Clamped to the 1 m grid resolution so stacked heads can't zero it.
+        var spacingFromCanvas = countFromCanvas && _design.Sprinklers.Count >= 2;
+        var effectiveSpacing = spacingFromCanvas
+            ? Math.Max(1.0, ZoneDesignCalculators.MeanNearestNeighbourSpacing(
+                _design.Sprinklers.Select(s => (s.X, s.Y)).ToList()))
+            : i.SprinklerSpacingMetres;
+
         var applicationRate = ApplicationCalculators.SprinklerRateMmPerHour(
-            avgSprinklerFlowLhr, i.SprinklerSpacingMetres, i.SprinklerSpacingMetres);
+            avgSprinklerFlowLhr, effectiveSpacing, effectiveSpacing);
 
         // The max-sprinklers solver uses the placed pump's rating when one exists.
         var pump = _design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump);
@@ -1062,12 +1077,14 @@ else
                 countFromCanvas
                     ? _design.Sprinklers.Average(s => s.RadiusMetres ?? i.SprinklerRadiusMetres)
                     : i.SprinklerRadiusMetres,
-                i.SprinklerSpacingMetres),
+                effectiveSpacing),
             applicationRate,
             ZoneDesignCalculators.RunTimeMinutesForDepth(i.TargetDepthMm, applicationRate),
             ZoneDesignCalculators.MaxSprinklersForPumpFlow(pumpFlowLmin, i.SprinklerFlowLitresPerHour),
             avgSprinklerFlowLhr,
-            pumpFlowLmin);
+            pumpFlowLmin,
+            effectiveSpacing,
+            spacingFromCanvas);
     }
 
     private string SolverLabel() => _solveMode switch

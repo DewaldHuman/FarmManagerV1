@@ -43,4 +43,38 @@ public static class ZoneDesignCalculators
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(applicationRateMmPerHour);
         return targetDepthMm / applicationRateMmPerHour * 60;
     }
+
+    /// <summary>
+    /// Effective sprinkler spacing of a placed layout: the mean, over all heads,
+    /// of the distance to each head's nearest neighbour. Equals the grid spacing
+    /// exactly on a uniform grid; a defensible "effective grid" figure otherwise.
+    /// </summary>
+    public static double MeanNearestNeighbourSpacing(IReadOnlyList<(double X, double Y)> points)
+    {
+        if (points.Count < 2)
+        {
+            throw new ArgumentException("At least two points are required.", nameof(points));
+        }
+
+        double total = 0;
+        for (var i = 0; i < points.Count; i++)
+        {
+            var nearest = double.MaxValue;
+            for (var j = 0; j < points.Count; j++)
+            {
+                if (j == i)
+                {
+                    continue;
+                }
+
+                var dx = points[i].X - points[j].X;
+                var dy = points[i].Y - points[j].Y;
+                nearest = Math.Min(nearest, Math.Sqrt(dx * dx + dy * dy));
+            }
+
+            total += nearest;
+        }
+
+        return total / points.Count;
+    }
 }

@@ -390,3 +390,45 @@ public class ZoneDesignCalculatorTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ZoneDesignCalculators.RunTimeMinutesForDepth(12, 0));
     }
 }
+
+public class MeanNearestNeighbourSpacingTests
+{
+    [Fact]
+    public void UniformGrid_12mSpacing_14mRows_Is12()
+    {
+        // 5 columns at 12 m spacing × 3 rows 14 m apart: every head's nearest
+        // neighbour is the 12 m one along its own row.
+        var points = new List<(double X, double Y)>();
+        foreach (var y in new[] { 0.0, 14.0, 28.0 })
+        {
+            for (var col = 0; col < 5; col++)
+            {
+                points.Add((col * 12.0, y));
+            }
+        }
+
+        Assert.Equal(12.0, ZoneDesignCalculators.MeanNearestNeighbourSpacing(points), 4);
+    }
+
+    [Fact]
+    public void TwoPoints_6mApart_Is6()
+    {
+        Assert.Equal(6.0, ZoneDesignCalculators.MeanNearestNeighbourSpacing(
+            new List<(double X, double Y)> { (10, 10), (16, 10) }), 4);
+    }
+
+    [Fact]
+    public void IrregularLShape_IsHandComputedMean()
+    {
+        // (0,0)→6, (6,0)→6, (6,8)→8; mean = 20/3 = 6.6667
+        Assert.Equal(6.6667, ZoneDesignCalculators.MeanNearestNeighbourSpacing(
+            new List<(double X, double Y)> { (0, 0), (6, 0), (6, 8) }), 4);
+    }
+
+    [Fact]
+    public void FewerThanTwoPoints_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => ZoneDesignCalculators.MeanNearestNeighbourSpacing(
+            new List<(double X, double Y)> { (0, 0) }));
+    }
+}
