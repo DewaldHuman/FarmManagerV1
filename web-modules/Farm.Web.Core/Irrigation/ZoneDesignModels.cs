@@ -63,6 +63,41 @@ public class DesignPipe
         return best;
     }
 
+    /// <summary>
+    /// Arc length (metres) from Vertices[0] to the projection of the point onto
+    /// this pipe's nearest segment — "how far along the pipe" a take-off sits.
+    /// </summary>
+    public double DistanceAlongTo(double x, double y)
+    {
+        if (Vertices.Count < 2)
+        {
+            return 0;
+        }
+
+        var best = double.MaxValue;
+        var bestAlong = 0.0;
+        var walked = 0.0;
+        for (var i = 0; i < Vertices.Count - 1; i++)
+        {
+            var (ax, ay) = (Vertices[i].X, Vertices[i].Y);
+            var (bx, by) = (Vertices[i + 1].X, Vertices[i + 1].Y);
+            var (dx, dy) = (bx - ax, by - ay);
+            var segmentLength = Math.Sqrt(dx * dx + dy * dy);
+            var lengthSq = dx * dx + dy * dy;
+            var t = lengthSq == 0 ? 0 : Math.Clamp(((x - ax) * dx + (y - ay) * dy) / lengthSq, 0, 1);
+            var d = Math.Sqrt(Math.Pow(x - (ax + t * dx), 2) + Math.Pow(y - (ay + t * dy), 2));
+            if (d < best)
+            {
+                best = d;
+                bestAlong = walked + t * segmentLength;
+            }
+
+            walked += segmentLength;
+        }
+
+        return bestAlong;
+    }
+
     /// <summary>Shortest distance from a point to this pipe's polyline (metres).</summary>
     public double DistanceToPoint(double x, double y)
     {
@@ -130,6 +165,12 @@ public class DesignInputs
     public double SprinklerFlowLitresPerHour { get; set; } = 200;
     public double SprinklerSpacingMetres { get; set; } = 12;
     public double SprinklerRadiusMetres { get; set; } = 7;
+
+    // Operating pressure required at the sprinkler head (real heads span roughly
+    // 1.5–4 bar). The initializer doubles as backward compatibility: persisted
+    // design JSON from before this field existed omits it and lands on 2.0.
+    public double SprinklerHeadPressureBar { get; set; } = 2.0;
+
     public double TargetDepthMm { get; set; } = 12;
 }
 

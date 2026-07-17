@@ -45,8 +45,11 @@ public class ZoneDesignEvaluatorTests
         Assert.Equal(50, r.DemandFlowLitresPerMinute, 4);
         Assert.Equal(0.42, r.MainVelocity, 2);
         Assert.Equal(0.57, r.LateralVelocity, 2);
-        Assert.Equal(0.06, r.FrictionLossBar, 2);
-        Assert.Equal(2.06, r.RequiredPumpPressureBar, 2);
+        // Main friction accumulates per segment from the pump end: take-offs at
+        // 10/24/38 m carrying 3 → 2 → 1 m³/h ≈ 0.774 kPa, plus the busiest
+        // lateral's Christiansen loss ≈ 4.639 kPa → ≈ 0.054 bar.
+        Assert.Equal(0.05, r.FrictionLossBar, 2);
+        Assert.Equal(2.05, r.RequiredPumpPressureBar, 2);
         Assert.Equal(5, r.BusiestLateralSprinklers);
         Assert.Equal(12, r.EffectiveSpacingMetres, 4);
         Assert.True(r.SpacingFromCanvas);
@@ -151,6 +154,100 @@ public class ZoneDesignEvaluatorTests
 
         Assert.Equal(60, r.MaxSprinklers); // 200 × 60 ÷ 200
         Assert.Equal(200, r.PumpFlowLitresPerMinute);
+    }
+
+    [Fact]
+    public void HeadPressure_IsEditable_AndFeedsRequiredPressure()
+    {
+        var design = DemoDesign();
+        design.Inputs.SprinklerHeadPressureBar = 3.0;
+
+        var r = ZoneDesignEvaluator.Evaluate(design).Results!;
+        Assert.Equal(r.FrictionLossBar + 3.0, r.RequiredPumpPressureBar, 6);
+
+        design.Inputs.SprinklerHeadPressureBar = 0;
+        Assert.Null(ZoneDesignEvaluator.Evaluate(design).Results);
+    }
+
+    /// <summary>Main (0,0)→(0,30); lateral A at y=10 with two sprinklers (0.4 m³/h),
+    /// lateral B at y=20 with one (0.2 m³/h).</summary>
+    private static ZoneDesign TwoTakeOffDesign()
+    {
+        var design = new ZoneDesign();
+        design.Pipes.Add(new DesignPipe
+        {
+            IsMain = true,
+            Vertices = new List<DesignVertex> { new() { X = 0, Y = 0 }, new() { X = 0, Y = 30 } },
+        });
+        design.Pipes.Add(new DesignPipe
+        {
+            Vertices = new List<DesignVertex> { new() { X = 0, Y = 10 }, new() { X = 20, Y = 10 } },
+        });
+        design.Pipes.Add(new DesignPipe
+        {
+            Vertices = new List<DesignVertex> { new() { X = 0, Y = 20 }, new() { X = 20, Y = 20 } },
+        });
+        design.Sprinklers.Add(new DesignSprinkler { X = 5, Y = 10 });
+        design.Sprinklers.Add(new DesignSprinkler { X = 15, Y = 10 });
+        design.Sprinklers.Add(new DesignSprinkler { X = 5, Y = 20 });
+        return design;
+    }
+
+    [Fact]
+    public void MainFriction_AccumulatesPerSegment()
+    {
+        var r = ZoneDesignEvaluator.Evaluate(TwoTakeOffDesign()).Results!;
+
+        // No inlet marker → inlet is the draw-start vertex (0,0). Segments:
+        // 0–10 m at 0.6 m³/h (all flow), 10–20 m at 0.2 m³/h (lateral B's share),
+        // zero-flow tail 20–30 m contributes nothing. Lateral friction = the
+        // worst lateral (A: 0.4 m³/h, 2 outlets over 20 m).
+        var mainKpa = Farm.Irrigation.Calculators.HydraulicsCalculators.HazenWilliamsFrictionLoss(0.6, 50, 10, 150).PressureLossKpa
+                    + Farm.Irrigation.Calculators.HydraulicsCalculators.HazenWilliamsFrictionLoss(0.2, 50, 10, 150).PressureLossKpa;
+        var lateralKpa = Math.Max(
+            Farm.Irrigation.Calculators.HydraulicsCalculators.LateralFrictionLoss(0.4, 25, 20, 150, 2).PressureLossKpa,
+            Farm.Irrigation.Calculators.HydraulicsCalculators.LateralFrictionLoss(0.2, 25, 20, 150, 1).PressureLossKpa);
+
+        Assert.Equal((mainKpa + lateralKpa) / 100, r.FrictionLossBar, 6);
+    }
+
+    [Fact]
+    public void MainFriction_InletFollowsPump()
+    {
+        var design = TwoTakeOffDesign();
+        design.Points.Add(new DesignPoint { Kind = DesignPointKind.Pump, X = 0, Y = 30 }); // far end
+
+        var r = ZoneDesignEvaluator.Evaluate(design).Results!;
+
+        // Inlet flips to (0,30): take-offs mirror to 10 m (lateral B) and 20 m
+        // (lateral A) → segments 0–10 at 0.6 m³/h, then 10–20 at 0.4 m³/h.
+        var mainKpa = Farm.Irrigation.Calculators.HydraulicsCalculators.HazenWilliamsFrictionLoss(0.6, 50, 10, 150).PressureLossKpa
+                    + Farm.Irrigation.Calculators.HydraulicsCalculators.HazenWilliamsFrictionLoss(0.4, 50, 10, 150).PressureLossKpa;
+        var lateralKpa = Farm.Irrigation.Calculators.HydraulicsCalculators.LateralFrictionLoss(0.4, 25, 20, 150, 2).PressureLossKpa;
+
+        Assert.Equal((mainKpa + lateralKpa) / 100, r.FrictionLossBar, 6);
+        Assert.NotEqual(
+            ZoneDesignEvaluator.Evaluate(TwoTakeOffDesign()).Results!.FrictionLossBar,
+            r.FrictionLossBar);
+    }
+
+    [Fact]
+    public void MainFriction_NoLaterals_FallsBackToFullDemand()
+    {
+        var design = new ZoneDesign();
+        design.Pipes.Add(new DesignPipe
+        {
+            IsMain = true,
+            Vertices = new List<DesignVertex> { new() { X = 0, Y = 0 }, new() { X = 0, Y = 30 } },
+        });
+        design.Sprinklers.Add(new DesignSprinkler { X = 5, Y = 10 });
+        design.Sprinklers.Add(new DesignSprinkler { X = 5, Y = 20 });
+
+        var r = ZoneDesignEvaluator.Evaluate(design).Results!;
+
+        // 2 × 200 L/hr = 400 L/hr = 0.4 m³/h over the full 30 m main.
+        var expectedKpa = Farm.Irrigation.Calculators.HydraulicsCalculators.HazenWilliamsFrictionLoss(0.4, 50, 30, 150).PressureLossKpa;
+        Assert.Equal(expectedKpa / 100, r.FrictionLossBar, 6);
     }
 
     [Fact]

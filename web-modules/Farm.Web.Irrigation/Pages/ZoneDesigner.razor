@@ -346,7 +346,7 @@ else
                 <div class="zone-designer-result">
                     <div>
                         <div>Required pump pressure</div>
-                        <div class="zone-designer-result__sub">incl. 2.0 bar at sprinkler head</div>
+                        <div class="zone-designer-result__sub">incl. @F1(_design.Inputs.SprinklerHeadPressureBar) bar at sprinkler head</div>
                     </div>
                     <strong>@F1(results.RequiredPumpPressureBar) bar</strong>
                 </div>
@@ -364,6 +364,7 @@ else
                     </div>
                     <strong>@F1(results.ApplicationRateMmPerHour) mm/hr</strong>
                 </div>
+                <div class="zone-designer-estimate-note">Planning estimates — elevation and pipe-fitting losses are not modelled.</div>
             }
         </div>
     </div>
@@ -447,6 +448,7 @@ else
                 CanvasValue: () => F1(_eval.Results?.EffectiveSpacingMetres ?? _design.Inputs.SprinklerSpacingMetres)),
             new("Sprinkler radius", "m", () => _design.Inputs.SprinklerRadiusMetres, v => _design.Inputs.SprinklerRadiusMetres = v,
                 Status: () => GroupStatus(_design.Sprinklers.Count(s => s.RadiusMetres is not null), _design.Sprinklers.Count)),
+            new("Head pressure", "bar", () => _design.Inputs.SprinklerHeadPressureBar, v => _design.Inputs.SprinklerHeadPressureBar = v),
             new("Target depth", "mm", () => _design.Inputs.TargetDepthMm, v => _design.Inputs.TargetDepthMm = v),
         };
 

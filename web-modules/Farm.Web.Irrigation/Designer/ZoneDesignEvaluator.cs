@@ -42,7 +42,6 @@ public sealed record DesignEvaluation(
 public static class ZoneDesignEvaluator
 {
     private const double LitresPerMinuteToM3PerHour = 0.06;
-    private const double SprinklerHeadPressureBar = 2.0;
     private const int AssumedLateralCount = 3; // matches the demo layout when nothing is drawn
 
     // Connectivity tolerances (grid is 1 m): a lateral counts as plumbed into the
@@ -65,7 +64,8 @@ public static class ZoneDesignEvaluator
 
         if (i.PumpFlowLitresPerMinute <= 0 || i.MainDiameterMm <= 0 || i.LateralDiameterMm <= 0
             || effectiveCount <= 0 || i.SprinklerFlowLitresPerHour <= 0
-            || i.SprinklerSpacingMetres <= 0 || i.SprinklerRadiusMetres <= 0 || i.TargetDepthMm <= 0)
+            || i.SprinklerSpacingMetres <= 0 || i.SprinklerRadiusMetres <= 0 || i.TargetDepthMm <= 0
+            || i.SprinklerHeadPressureBar <= 0)
         {
             return new DesignEvaluation(null, lateralStats, warnings, disconnectedLateralIds, farSprinklerIds);
         }
@@ -200,11 +200,9 @@ public static class ZoneDesignEvaluator
         }
 
         var frictionKpa = lateralFrictionKpa;
-        var mainLength = design.Pipes.Where(p => p.IsMain).Sum(p => p.LengthMetres);
-        if (mainLength > 0)
+        if (mainPipe is not null && mainPipe.LengthMetres > 0)
         {
-            frictionKpa += HydraulicsCalculators.HazenWilliamsFrictionLoss(
-                demandLmin * LitresPerMinuteToM3PerHour, mainDiameterMm, mainLength, PipeRoughness.Upvc).PressureLossKpa;
+            frictionKpa += MainFrictionKpa(design, mainPipe, mainDiameterMm, demandLmin, connectedLaterals, lateralStats);
         }
 
         var frictionBar = frictionKpa / 100;
@@ -236,7 +234,7 @@ public static class ZoneDesignEvaluator
             mainVelocity,
             lateralVelocity,
             frictionBar,
-            frictionBar + SprinklerHeadPressureBar,
+            frictionBar + i.SprinklerHeadPressureBar,
             ZoneDesignCalculators.CoverageRatio(
                 countFromCanvas
                     ? design.Sprinklers.Average(s => s.RadiusMetres ?? i.SprinklerRadiusMetres)
@@ -251,5 +249,79 @@ public static class ZoneDesignEvaluator
             spacingFromCanvas);
 
         return new DesignEvaluation(results, lateralStats, warnings, disconnectedLateralIds, farSprinklerIds);
+    }
+
+    /// <summary>
+    /// Main-pipe friction with flow accumulation: the main is split at each
+    /// connected lateral's take-off point and each segment carries only the flow
+    /// still to be delivered downstream of it (the tail past the last take-off
+    /// carries none). Falls back to full demand over the full length when no
+    /// routed take-offs exist (no laterals drawn / none connected).
+    /// </summary>
+    private static double MainFrictionKpa(
+        ZoneDesign design,
+        DesignPipe mainPipe,
+        double mainDiameterMm,
+        double demandLmin,
+        List<DesignPipe> connectedLaterals,
+        Dictionary<Guid, LateralStats> lateralStats)
+    {
+        var mainLength = mainPipe.LengthMetres;
+
+        var takeOffs = new List<(double Along, double FlowLmin)>();
+        foreach (var lateral in connectedLaterals)
+        {
+            if (!lateralStats.TryGetValue(lateral.Id, out var stats) || stats.FlowLitresPerMinute <= 0)
+            {
+                continue;
+            }
+
+            var tap = lateral.Vertices.MinBy(v => mainPipe.DistanceToPoint(v.X, v.Y))!;
+            takeOffs.Add((Math.Clamp(mainPipe.DistanceAlongTo(tap.X, tap.Y), 0, mainLength), stats.FlowLitresPerMinute));
+        }
+
+        if (takeOffs.Count == 0)
+        {
+            return HydraulicsCalculators.HazenWilliamsFrictionLoss(
+                demandLmin * LitresPerMinuteToM3PerHour, mainDiameterMm, mainLength, PipeRoughness.Upvc).PressureLossKpa;
+        }
+
+        // Inlet end of the main: nearest a placed pump, else a placed water
+        // source, else the draw-start vertex. Take-off distances are measured
+        // from the inlet, so they mirror when the inlet is the far end.
+        var inlet = design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.Pump)
+            ?? design.Points.FirstOrDefault(p => p.Kind == DesignPointKind.WaterSource);
+        if (inlet is not null)
+        {
+            var first = mainPipe.Vertices[0];
+            var last = mainPipe.Vertices[^1];
+            var dFirst = Math.Pow(first.X - inlet.X, 2) + Math.Pow(first.Y - inlet.Y, 2);
+            var dLast = Math.Pow(last.X - inlet.X, 2) + Math.Pow(last.Y - inlet.Y, 2);
+            if (dLast < dFirst)
+            {
+                takeOffs = takeOffs.Select(t => (mainLength - t.Along, t.FlowLmin)).ToList();
+            }
+        }
+
+        // Only routed flow traverses the main (equals demand when all sprinklers
+        // route to connected laterals; less in the even-split fallback where
+        // disconnected laterals still take a share of the nominal split).
+        var frictionKpa = 0.0;
+        var position = 0.0;
+        var remainingLmin = takeOffs.Sum(t => t.FlowLmin);
+        foreach (var (along, flowLmin) in takeOffs.OrderBy(t => t.Along))
+        {
+            var segmentLength = along - position;
+            if (segmentLength > 0 && remainingLmin > 0)
+            {
+                frictionKpa += HydraulicsCalculators.HazenWilliamsFrictionLoss(
+                    remainingLmin * LitresPerMinuteToM3PerHour, mainDiameterMm, segmentLength, PipeRoughness.Upvc).PressureLossKpa;
+            }
+
+            position = Math.Max(position, along);
+            remainingLmin -= flowLmin;
+        }
+
+        return frictionKpa;
     }
 }

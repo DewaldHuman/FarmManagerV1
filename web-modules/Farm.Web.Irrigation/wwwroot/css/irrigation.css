@@ -608,6 +608,13 @@
   font-weight: 600;
 }
 
+.zone-designer-estimate-note {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding-top: 10px;
+}
+
 .zone-designer-warnings {
   background: var(--status-due-bg);
   border: 1px solid var(--status-due-border);
