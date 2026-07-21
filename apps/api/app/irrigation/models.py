@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, String
+from sqlalchemy import DateTime, Enum, Float, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -68,4 +68,37 @@ class ZoneDesignVersion(IrrigationSchemaBase):
     created_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+
+class Schedule(IrrigationSchemaBase):
+    """A zone's agronomic irrigation schedule (one per zone). Stores the soil +
+    crop parameters and the resulting watering interval, which is computed
+    client-side by Farm.Irrigation.Calculators.SchedulingCalculators and stored
+    verbatim — the backend never recomputes it (no-server-math rule). Core reads
+    interval_days to compute Zone.status, superseding the manual
+    core.zones.irrigation_interval_days when a schedule exists."""
+
+    __tablename__ = "schedules"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    # No FK (cross-schema, app-validated); unique — one schedule per zone.
+    zone_id: Mapped[uuid.UUID] = mapped_column(nullable=False, unique=True, index=True)
+    # Agronomic inputs (entered manually for now; weather/soil feeds are future).
+    available_water_mm_per_metre: Mapped[float] = mapped_column(Float, nullable=False)
+    root_depth_metres: Mapped[float] = mapped_column(Float, nullable=False)
+    allowable_depletion_percent: Mapped[float] = mapped_column(Float, nullable=False)
+    peak_water_use_mm_per_day: Mapped[float] = mapped_column(Float, nullable=False)
+    # Client-computed outputs, stored verbatim.
+    interval_days: Mapped[float] = mapped_column(Float, nullable=False)
+    readily_available_water_mm: Mapped[float] = mapped_column(Float, nullable=False)
+    updated_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
     )

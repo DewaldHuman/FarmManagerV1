@@ -11,6 +11,8 @@ from app.irrigation import service
 from app.irrigation.schemas import (
     CalculationRunCreate,
     CalculationRunRead,
+    ScheduleRead,
+    ScheduleUpsert,
     ZoneDesignVersionCreate,
     ZoneDesignVersionInfo,
     ZoneDesignVersionRead,
@@ -94,3 +96,26 @@ def get_design_version(
     if version is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Design not found")
     return version
+
+
+@router.put("/zones/{zone_id}/schedule", response_model=ScheduleRead)
+def upsert_schedule(
+    zone_id: uuid.UUID,
+    payload: ScheduleUpsert,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    try:
+        return service.upsert_schedule(db, zone_id, payload, updated_by=current_user.id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Zone not found")
+
+
+@router.get("/zones/{zone_id}/schedule", response_model=ScheduleRead | None)
+def get_schedule(
+    zone_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(get_current_user)],
+):
+    # 200 with a null body when no schedule exists — a normal "not set" state.
+    return service.get_schedule(db, zone_id)

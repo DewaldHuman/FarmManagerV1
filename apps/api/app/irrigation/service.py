@@ -5,8 +5,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core import service as core_service
-from app.irrigation.models import CalculationRun, ZoneDesignVersion
-from app.irrigation.schemas import CalculationRunCreate, ZoneDesignVersionCreate
+from app.irrigation.models import CalculationRun, Schedule, ZoneDesignVersion
+from app.irrigation.schemas import CalculationRunCreate, ScheduleUpsert, ZoneDesignVersionCreate
 
 
 def _run_to_read_kwargs(run: CalculationRun, zone_name: str) -> dict:
@@ -100,6 +100,46 @@ def get_latest_design(db: Session, zone_id: uuid.UUID) -> ZoneDesignVersion | No
 
 def get_design_version(db: Session, design_id: uuid.UUID) -> ZoneDesignVersion | None:
     return db.query(ZoneDesignVersion).filter(ZoneDesignVersion.id == design_id).first()
+
+
+def upsert_schedule(
+    db: Session, zone_id: uuid.UUID, payload: ScheduleUpsert, updated_by: uuid.UUID
+) -> Schedule:
+    zone = core_service.get_zone(db, zone_id)
+    if zone is None:
+        raise ValueError("Zone not found")
+
+    schedule = db.query(Schedule).filter(Schedule.zone_id == zone_id).first()
+    if schedule is None:
+        schedule = Schedule(zone_id=zone_id, updated_by=updated_by, **payload.model_dump())
+        db.add(schedule)
+    else:
+        for key, value in payload.model_dump().items():
+            setattr(schedule, key, value)
+        schedule.updated_by = updated_by
+
+    db.commit()
+    db.refresh(schedule)
+    return schedule
+
+
+def get_schedule(db: Session, zone_id: uuid.UUID) -> Schedule | None:
+    return db.query(Schedule).filter(Schedule.zone_id == zone_id).first()
+
+
+def get_interval_days_by_zone(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, float]:
+    """Computed watering interval per zone that has a Schedule — consumed by
+    app.core.service to compute Zone.status, superseding the manual interval.
+    """
+    if not zone_ids:
+        return {}
+
+    rows = (
+        db.query(Schedule.zone_id, Schedule.interval_days)
+        .filter(Schedule.zone_id.in_(zone_ids))
+        .all()
+    )
+    return dict(rows)
 
 
 def get_last_run_at_by_zone(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, datetime]:

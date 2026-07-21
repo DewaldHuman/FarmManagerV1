@@ -106,7 +106,25 @@ def _last_run_lookup(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, 
     return irrigation_service.get_last_run_at_by_zone(db, zone_ids)
 
 
-def _zone_row_to_read_kwargs(zone: Zone, field_name: str, last_run_at: datetime | None) -> dict:
+def _schedule_interval_lookup(db: Session, zone_ids: list[uuid.UUID]) -> dict[uuid.UUID, float]:
+    # Same deferred-import inversion as _last_run_lookup — a zone's agronomic
+    # Schedule (Irrigation module) supersedes the manual interval for status.
+    from app.irrigation import service as irrigation_service
+
+    return irrigation_service.get_interval_days_by_zone(db, zone_ids)
+
+
+def _zone_row_to_read_kwargs(
+    zone: Zone,
+    field_name: str,
+    last_run_at: datetime | None,
+    schedule_interval: float | None = None,
+) -> dict:
+    # A saved Schedule's computed interval wins over the manual field; floor it
+    # (a 6.7-day interval means "due after 6 full days" — conservative).
+    effective_interval = (
+        int(schedule_interval) if schedule_interval is not None else zone.irrigation_interval_days
+    )
     return {
         "id": zone.id,
         "field_id": zone.field_id,
@@ -117,7 +135,7 @@ def _zone_row_to_read_kwargs(zone: Zone, field_name: str, last_run_at: datetime 
         "irrigation_system_type": zone.irrigation_system_type,
         "irrigation_interval_days": zone.irrigation_interval_days,
         "is_active": zone.is_active,
-        "status": _compute_zone_status(zone.irrigation_interval_days, last_run_at or zone.created_at),
+        "status": _compute_zone_status(effective_interval, last_run_at or zone.created_at),
         "created_at": zone.created_at,
     }
 
@@ -129,8 +147,13 @@ def list_zones(db: Session, field_id: uuid.UUID | None = None, include_inactive:
     if not include_inactive:
         query = query.filter(Zone.is_active.is_(True))
     rows = query.order_by(Zone.name).all()
-    last_run_lookup = _last_run_lookup(db, [zone.id for zone, _ in rows])
-    return [_zone_row_to_read_kwargs(zone, field_name, last_run_lookup.get(zone.id)) for zone, field_name in rows]
+    zone_ids = [zone.id for zone, _ in rows]
+    last_run_lookup = _last_run_lookup(db, zone_ids)
+    schedule_lookup = _schedule_interval_lookup(db, zone_ids)
+    return [
+        _zone_row_to_read_kwargs(zone, field_name, last_run_lookup.get(zone.id), schedule_lookup.get(zone.id))
+        for zone, field_name in rows
+    ]
 
 
 def get_zone(db: Session, zone_id: uuid.UUID) -> dict | None:
@@ -144,7 +167,8 @@ def get_zone(db: Session, zone_id: uuid.UUID) -> dict | None:
         return None
     zone, field_name = row
     last_run_at = _last_run_lookup(db, [zone.id]).get(zone.id)
-    return _zone_row_to_read_kwargs(zone, field_name, last_run_at)
+    schedule_interval = _schedule_interval_lookup(db, [zone.id]).get(zone.id)
+    return _zone_row_to_read_kwargs(zone, field_name, last_run_at, schedule_interval)
 
 
 def create_zone(db: Session, payload: ZoneCreate) -> dict:
@@ -170,7 +194,8 @@ def update_zone(db: Session, zone: Zone, payload: ZoneUpdate) -> dict:
     db.refresh(zone)
     field = db.query(Field).filter(Field.id == zone.field_id).first()
     last_run_at = _last_run_lookup(db, [zone.id]).get(zone.id)
-    return _zone_row_to_read_kwargs(zone, field.name if field else "", last_run_at)
+    schedule_interval = _schedule_interval_lookup(db, [zone.id]).get(zone.id)
+    return _zone_row_to_read_kwargs(zone, field.name if field else "", last_run_at, schedule_interval)
 
 
 def archive_zone(db: Session, zone: Zone) -> dict:
@@ -179,4 +204,5 @@ def archive_zone(db: Session, zone: Zone) -> dict:
     db.refresh(zone)
     field = db.query(Field).filter(Field.id == zone.field_id).first()
     last_run_at = _last_run_lookup(db, [zone.id]).get(zone.id)
-    return _zone_row_to_read_kwargs(zone, field.name if field else "", last_run_at)
+    schedule_interval = _schedule_interval_lookup(db, [zone.id]).get(zone.id)
+    return _zone_row_to_read_kwargs(zone, field.name if field else "", last_run_at, schedule_interval)

@@ -42,3 +42,22 @@ class ZoneDesignVersionInfo(BaseModel):
 
 class ZoneDesignVersionRead(ZoneDesignVersionInfo):
     design: dict
+
+
+class ScheduleUpsert(BaseModel):
+    available_water_mm_per_metre: float
+    root_depth_metres: float
+    allowable_depletion_percent: float
+    peak_water_use_mm_per_day: float
+    # Computed client-side by SchedulingCalculators and stored verbatim.
+    interval_days: float
+    readily_available_water_mm: float
+
+
+class ScheduleRead(ScheduleUpsert):
+    id: uuid.UUID
+    zone_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

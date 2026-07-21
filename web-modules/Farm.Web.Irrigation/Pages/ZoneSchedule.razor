@@ -1,0 +1,170 @@
+@page "/irrigation/zones/{Id:guid}/schedule"
+@layout AppShellLayout
+@attribute [Authorize]
+@using System.Globalization
+@inject IFarmService FarmService
+@inject IIrrigationService IrrigationService
+@inject IScheduleStore ScheduleStore
+@inject NavigationManager Nav
+
+@* Unlocalized by module-wide convention (see RunCalculator.razor / CLAUDE.md).
+   Interval is computed here by SchedulingCalculators (lazy library) and stored
+   verbatim — the backend never recomputes it. *@
+
+<button class="calc-back-btn" @onclick="GoBack">← Zone overview</button>
+
+@if (_loading)
+{
+    <p>Loading…</p>
+}
+else if (_zone is null)
+{
+    <p class="page-subtitle">Zone not found.</p>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <div class="app-shell__eyebrow">Irrigation schedule</div>
+            <h1 class="app-shell__title">@_zone.Name</h1>
+        </div>
+    </div>
+
+    <div class="schedule-layout">
+        <div class="card schedule-form">
+            <label class="form-label" for="sch-awc">Soil available water (mm/m)</label>
+            <input id="sch-awc" type="number" step="any" min="0" class="form-input"
+                   @bind="_awc" @bind:after="Recompute" @bind:event="oninput" />
+
+            <label class="form-label" for="sch-root">Root depth (m)</label>
+            <input id="sch-root" type="number" step="any" min="0" class="form-input"
+                   @bind="_root" @bind:after="Recompute" @bind:event="oninput" />
+
+            <label class="form-label" for="sch-mad">Allowable depletion (%)</label>
+            <input id="sch-mad" type="number" step="any" min="0" max="100" class="form-input"
+                   @bind="_mad" @bind:after="Recompute" @bind:event="oninput" />
+
+            <label class="form-label" for="sch-peak">Peak crop water use (mm/day)</label>
+            <input id="sch-peak" type="number" step="any" min="0" class="form-input"
+                   @bind="_peak" @bind:after="Recompute" @bind:event="oninput" />
+
+            <div class="schedule-hint">Peak-season crop water use (ETc). Enter it manually for now — a weather feed will supply it in a later phase.</div>
+
+            <button class="btn btn-primary" @onclick="SaveAsync" disabled="@(_saving || _interval is null)">Save schedule</button>
+            @if (_saveFailed)
+            {
+                <div class="form-error">Save failed — try again.</div>
+            }
+            else if (_savedAt is not null && !_dirty)
+            {
+                <div class="schedule-saved">Saved @_savedAt.Value.ToLocalTime().ToString("dd MMM HH:mm", CultureInfo.InvariantCulture)</div>
+            }
+        </div>
+
+        <div class="schedule-result">
+            @if (_interval is not null)
+            {
+                <div class="calc-result-card">
+                    <div class="calc-result-card__label">Recommended interval</div>
+                    <div class="calc-result-card__value">@Fd(_interval.Value) <small>days</small></div>
+                    <div class="calc-result-card__detail">Readily available water @F0(_raw) mm ÷ @Fd(_peak) mm/day peak use</div>
+                    <div class="calc-result-card__detail">Next due ≈ @_nextDue</div>
+                </div>
+            }
+            else
+            {
+                <div class="calc-result-empty">Enter positive soil and crop values to compute an interval.</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ZoneDto? _zone;
+    private bool _loading = true;
+    private bool _saving;
+    private bool _saveFailed;
+    private bool _dirty;
+    private DateTimeOffset? _savedAt;
+    private DateTimeOffset? _lastWatered;
+
+    private double _awc = 120;
+    private double _root = 0.6;
+    private double _mad = 50;
+    private double _peak = 6;
+
+    private double? _interval;
+    private double _raw;
+    private string _nextDue = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _zone = await FarmService.GetZoneAsync(Id);
+        if (_zone is not null)
+        {
+            var runs = await IrrigationService.ListCalculationRunsAsync(Id);
+            _lastWatered = runs.Count > 0 ? runs[0].CreatedAt : null;
+
+            var existing = await ScheduleStore.GetAsync(Id);
+            if (existing is not null)
+            {
+                _awc = existing.AvailableWaterMmPerMetre;
+                _root = existing.RootDepthMetres;
+                _mad = existing.AllowableDepletionPercent;
+                _peak = existing.PeakWaterUseMmPerDay;
+                _savedAt = existing.UpdatedAt;
+            }
+        }
+
+        Recompute();
+        _loading = false;
+    }
+
+    private void GoBack() => Nav.NavigateTo($"/irrigation/zones/{Id}");
+
+    private void Recompute()
+    {
+        _dirty = true;
+        if (_awc > 0 && _root > 0 && _mad > 0 && _peak > 0)
+        {
+            var result = SchedulingCalculators.MaxIrrigationInterval(_awc, _root, _mad, _peak);
+            _raw = result.ReadilyAvailableWaterMm;
+            _interval = result.IntervalDays;
+            var basis = _lastWatered ?? DateTimeOffset.Now;
+            var suffix = _lastWatered is null ? " (from today)" : "";
+            _nextDue = basis.AddDays(_interval.Value).ToLocalTime().ToString("dd MMM yyyy", CultureInfo.InvariantCulture) + suffix;
+        }
+        else
+        {
+            _interval = null;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_interval is null)
+        {
+            return;
+        }
+
+        _saving = true;
+        _saveFailed = false;
+        var dto = new ScheduleDto(_awc, _root, _mad, _peak, _interval.Value, _raw);
+        var saved = await ScheduleStore.UpsertAsync(Id, dto);
+        _saving = false;
+
+        if (saved is null)
+        {
+            _saveFailed = true;
+            return;
+        }
+
+        _savedAt = saved.UpdatedAt ?? DateTimeOffset.Now;
+        _dirty = false;
+    }
+
+    private static string F0(double value) => value.ToString("0", CultureInfo.InvariantCulture);
+    private static string Fd(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+}

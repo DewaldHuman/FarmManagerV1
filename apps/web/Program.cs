@@ -59,6 +59,13 @@ builder.Services.AddHttpClient<Farm.Web.Core.Irrigation.IZoneDesignStore, Farm.W
     client.BaseAddress = new Uri(apiBaseUrl);
 }).AddHttpMessageHandler<AuthTokenHandler>();
 
+// Per-zone agronomic irrigation schedule — same eager-Core placement rationale
+// as the design store (ZoneOverview.razor reads it to show schedule status).
+builder.Services.AddHttpClient<Farm.Web.Core.Irrigation.IScheduleStore, Farm.Web.Core.Irrigation.HttpScheduleStore>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+}).AddHttpMessageHandler<AuthTokenHandler>();
+
 var host = builder.Build();
 
 // Must run after Build() (so IJSRuntime is resolvable) but before RunAsync()

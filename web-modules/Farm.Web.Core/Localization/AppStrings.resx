@@ -415,6 +415,18 @@
   <data name="ZoneOverview_IrrigationDesign_Saved" xml:space="preserve">
     <value>Design saved</value>
   </data>
+  <data name="ZoneOverview_Schedule" xml:space="preserve">
+    <value>Irrigation schedule</value>
+  </data>
+  <data name="ZoneOverview_Schedule_Interval" xml:space="preserve">
+    <value>Water every {0} days</value>
+  </data>
+  <data name="ZoneOverview_Schedule_NextDue" xml:space="preserve">
+    <value>Next due ≈ {0}</value>
+  </data>
+  <data name="ZoneOverview_Schedule_NotSet" xml:space="preserve">
+    <value>Not set — open to compute a watering interval from soil and crop values.</value>
+  </data>
   <data name="ZoneOverview_History" xml:space="preserve">
     <value>Reports and history</value>
   </data>

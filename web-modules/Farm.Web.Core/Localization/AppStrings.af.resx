@@ -415,6 +415,18 @@
   <data name="ZoneOverview_IrrigationDesign_Saved" xml:space="preserve">
     <value>Ontwerp gestoor</value>
   </data>
+  <data name="ZoneOverview_Schedule" xml:space="preserve">
+    <value>Besproeiingskedule</value>
+  </data>
+  <data name="ZoneOverview_Schedule_Interval" xml:space="preserve">
+    <value>Water elke {0} dae</value>
+  </data>
+  <data name="ZoneOverview_Schedule_NextDue" xml:space="preserve">
+    <value>Volgende ≈ {0}</value>
+  </data>
+  <data name="ZoneOverview_Schedule_NotSet" xml:space="preserve">
+    <value>Nie gestel nie — maak oop om 'n natlei-interval uit grond- en gewaswaardes te bereken.</value>
+  </data>
   <data name="ZoneOverview_History" xml:space="preserve">
     <value>Verslae en geskiedenis</value>
   </data>
